@@ -1,8 +1,8 @@
 import numpy as np
 import cv2 as cv
 from matplotlib import pyplot as plt
-imgL = cv.imread('one.jpg',0)
-imgR = cv.imread('two.jpg',0)
+imgL = cv.imread('L.jpg', 0)
+imgR = cv.imread('R.jpg', 0)
 
 scale_percent = 30  # percent of original size
 width = int(imgL.shape[1] * scale_percent / 100)
