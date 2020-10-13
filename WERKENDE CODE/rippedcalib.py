@@ -20,7 +20,7 @@ OBJECT_POINT_ZERO = np.zeros((CHESSBOARD_SIZE[0] * CHESSBOARD_SIZE[1], 3),
 OBJECT_POINT_ZERO[:, :2] = np.mgrid[0:CHESSBOARD_SIZE[0],
         0:CHESSBOARD_SIZE[1]].T.reshape(-1, 2)
 
-OPTIMIZE_ALPHA = 0.25
+OPTIMIZE_ALPHA = 0
 
 TERMINATION_CRITERIA = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_MAX_ITER, 30,
         0.001)
@@ -169,6 +169,6 @@ rightMapX, rightMapY = cv2.initUndistortRectifyMap(
 
 np.savez_compressed(outputFile, imageSize=imageSize,
         leftMapX=leftMapX, leftMapY=leftMapY, leftROI=leftROI,
-        rightMapX=rightMapX, rightMapY=rightMapY, rightROI=rightROI)
+        rightMapX=rightMapX, rightMapY=rightMapY, rightROI=rightROI, )
 
 cv2.destroyAllWindows()

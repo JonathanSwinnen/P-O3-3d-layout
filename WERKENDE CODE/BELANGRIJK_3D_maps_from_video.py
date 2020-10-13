@@ -65,7 +65,7 @@ while success_L and success_R:
     fixedLeft = cv.remap(imgL, leftMapX, leftMapY, REMAP_INTERPOLATION)
     fixedRight = cv.remap(imgR, rightMapX, rightMapY, REMAP_INTERPOLATION)
 
-    cv.imshow("f", fixedLeft)
+    cv.imshow("f", imgL)
 
     grayLeft = cv.cvtColor(fixedLeft, cv.COLOR_BGR2GRAY)
     grayRight = cv.cvtColor(fixedRight, cv.COLOR_BGR2GRAY)
@@ -79,7 +79,6 @@ while success_L and success_R:
                         [0, -1, 0, 0.5 * h],  # turn points 180 deg around x-axis,
                         [0, 0, 0, -f],  # so that y-axis looks up
                         [0, 0, 1, 0]])
-        Q = cv.getOptimalNewCameraMatrix(Q, )
 
 
     # TODO: rectify images!!!!
