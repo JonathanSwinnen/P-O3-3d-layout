@@ -2,18 +2,35 @@ import cv2 as cv
 import numpy as np
 import time
 import pickle
-
+from matplotlib import pyplot as plt
 # timer
 start = time.time()
 step = 5
 
+
+# defining vars
 # defining vars
 window_size = 3
 min_disp = 16
 num_disp = 112 - min_disp
+"""
+stereo = cv.StereoSGBM_create(minDisparity=0,
+                              numDisparities=96,
+                              blockSize=20,
+                              P1=800,
+                              P2=2000,
+                              disp12MaxDiff=1,
+                              uniquenessRatio=5,
+                              speckleWindowSize=100,
+                              speckleRange=32
+                              )
+"""
+window_size = 5
+min_disp = 16
+num_disp = 112 - min_disp
 stereo = cv.StereoSGBM_create(minDisparity=min_disp,
                               numDisparities=num_disp,
-                              blockSize=16,
+                              blockSize=8,
                               P1=8 * 3 * window_size ** 2,
                               P2=32 * 3 * window_size ** 2,
                               disp12MaxDiff=1,
@@ -21,7 +38,6 @@ stereo = cv.StereoSGBM_create(minDisparity=min_disp,
                               speckleWindowSize=100,
                               speckleRange=32
                               )
-
 h = None
 
 video_L = cv.VideoCapture('output_L.avi')
@@ -44,9 +60,6 @@ while success_L and success_R:
     if not(success_L and success_R):
         break
 
-    # scale down images for faster processing
-    imgL = cv.pyrDown(imgL)
-    imgR = cv.pyrDown(imgR)
 
 
     # rectify images
@@ -62,10 +75,9 @@ while success_L and success_R:
     rightMapY = calibration["rightMapY"]
     rightROI = tuple(calibration["rightROI"])
 
-    fixedLeft = cv.remap(imgL, leftMapX, leftMapY, REMAP_INTERPOLATION)
-    fixedRight = cv.remap(imgR, rightMapX, rightMapY, REMAP_INTERPOLATION)
+    fixedLeft = cv.pyrDown(cv.remap(imgL, leftMapX, leftMapY, REMAP_INTERPOLATION))
+    fixedRight = cv.pyrDown(cv.remap(imgR, rightMapX, rightMapY, REMAP_INTERPOLATION))
 
-    cv.imshow("f", imgL)
 
     grayLeft = cv.cvtColor(fixedLeft, cv.COLOR_BGR2GRAY)
     grayRight = cv.cvtColor(fixedRight, cv.COLOR_BGR2GRAY)
@@ -80,23 +92,26 @@ while success_L and success_R:
                         [0, 0, 0, -f],  # so that y-axis looks up
                         [0, 0, 1, 0]])
 
-
     # TODO: rectify images!!!!
     # calculate disparity map
     disp = stereo.compute(grayRight, grayLeft).astype(np.float32) / 16.0
-    print()
-    cv.waitKey()
+    if count == 10:
+        plt.imshow(disp, "gray")
+        plt.show()
 
     # calculate depth map
     points = cv.reprojectImageTo3D(disp, Q)
+
     colors = cv.cvtColor(fixedLeft, cv.COLOR_BGR2RGB)  # colorizing 3D map
 
-    mask = disp > disp.min()
+    mask = disp > disp.min()+1
     points = points[mask]
     colors = colors[mask]
 
     points = points.reshape(-1, 3)
     colors = colors.reshape(-1, 3)
+    print(points)
+
 
     data[count] = (points, colors)
     count += 1

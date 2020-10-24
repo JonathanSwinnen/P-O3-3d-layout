@@ -17,7 +17,7 @@ image = imutils.resize(image,
 # Image that has a pedestrians inside it
 (regions, _) = hog.detectMultiScale(image,
 									winStride=(4, 4),
-									padding=(4, 4),
+									padding=(1, 1),
 									scale=1.05)
 
 # Drawing the regions in the Image

@@ -7,6 +7,8 @@ import pickle
 with open('objs.pkl', 'rb') as f:  # Python 3: open(..., 'rb')
     data = pickle.load(f)
 
+print(data[10][0])
+
 print(1)
 vp = Plotter(title="3D point cloud", axes=1, interactive=1)
 print(2)

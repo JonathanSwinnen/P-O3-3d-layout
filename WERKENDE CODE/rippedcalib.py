@@ -10,22 +10,22 @@ import sys
 import numpy as np
 import cv2
 
-
-CHESSBOARD_SIZE = (9, 6)
+SQUARE_SZ = 25
+CHESSBOARD_SIZE = (4, 4)
 CHESSBOARD_OPTIONS = (cv2.CALIB_CB_ADAPTIVE_THRESH |
         cv2.CALIB_CB_NORMALIZE_IMAGE | cv2.CALIB_CB_FAST_CHECK)
 
 OBJECT_POINT_ZERO = np.zeros((CHESSBOARD_SIZE[0] * CHESSBOARD_SIZE[1], 3),
         np.float32)
 OBJECT_POINT_ZERO[:, :2] = np.mgrid[0:CHESSBOARD_SIZE[0],
-        0:CHESSBOARD_SIZE[1]].T.reshape(-1, 2)
+        0:CHESSBOARD_SIZE[1]].T.reshape(-1, 2)*SQUARE_SZ
 
 OPTIMIZE_ALPHA = 0
 
 TERMINATION_CRITERIA = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_MAX_ITER, 30,
         0.001)
 
-MAX_IMAGES = 64
+MAX_IMAGES = 100
 
 
 leftImageDir = "pic/LEFT"
@@ -51,7 +51,7 @@ def readImagesAndFindChessboards(imageDirectory):
     imageSize = None
 
     for imagePath in sorted(imagePaths):
-        image = cv2.imread(imagePath)
+        image = (cv2.imread(imagePath))
         grayImage = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         newSize = grayImage.shape[::-1]
@@ -63,6 +63,7 @@ def readImagesAndFindChessboards(imageDirectory):
 
         hasCorners, corners = cv2.findChessboardCorners(grayImage,
                 CHESSBOARD_SIZE, cv2.CALIB_CB_FAST_CHECK)
+        print(len(corners))
         print(hasCorners)
         if hasCorners:
             filenames.append(os.path.basename(imagePath))
@@ -70,12 +71,11 @@ def readImagesAndFindChessboards(imageDirectory):
             cv2.cornerSubPix(grayImage, corners, (11, 11), (-1, -1),
                     TERMINATION_CRITERIA)
             imagePoints.append(corners)
-        print(filenames)
         cv2.drawChessboardCorners(image, CHESSBOARD_SIZE, corners, hasCorners)
-        cv2.imshow(imageDirectory, image)
+        cv2.imshow(imagePath, image)
 
         # Needed to draw the window
-        cv2.waitKey(1)
+        #cv2.waitKey(1000)
 
     cv2.destroyWindow(imageDirectory)
 
@@ -124,6 +124,7 @@ def getMatchingObjectAndImagePoints(requestedFilenames,
 
 leftObjectPoints, leftImagePoints = getMatchingObjectAndImagePoints(filenames,
         leftFilenames, leftObjectPoints, leftImagePoints)
+
 rightObjectPoints, rightImagePoints = getMatchingObjectAndImagePoints(filenames,
         rightFilenames, rightObjectPoints, rightImagePoints)
 
@@ -142,12 +143,14 @@ _, rightCameraMatrix, rightDistortionCoefficients, _, _ = cv2.calibrateCamera(
         objectPoints, rightImagePoints, imageSize, None, None)
 
 print("Calibrating cameras together...")
-(_, _, _, _, _, rotationMatrix, translationVector, _, _) = cv2.stereoCalibrate(
+(ret, _, _, _, _, rotationMatrix, translationVector, _, _) = cv2.stereoCalibrate(
         objectPoints, leftImagePoints, rightImagePoints,
         leftCameraMatrix, leftDistortionCoefficients,
         rightCameraMatrix, rightDistortionCoefficients,
         imageSize, None, None, None, None,
         cv2.CALIB_FIX_INTRINSIC, TERMINATION_CRITERIA)
+
+print("ERROR: " + str(ret))
 
 print("Rectifying cameras...")
 # TODO: Why do I care about the disparityToDepthMap?
@@ -169,6 +172,6 @@ rightMapX, rightMapY = cv2.initUndistortRectifyMap(
 
 np.savez_compressed(outputFile, imageSize=imageSize,
         leftMapX=leftMapX, leftMapY=leftMapY, leftROI=leftROI,
-        rightMapX=rightMapX, rightMapY=rightMapY, rightROI=rightROI, )
+        rightMapX=rightMapX, rightMapY=rightMapY, rightROI=rightROI, Q=dispartityToDepthMap)
 
 cv2.destroyAllWindows()
