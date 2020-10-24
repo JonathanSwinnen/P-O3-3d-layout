@@ -37,12 +37,12 @@ def write_ply(fn, verts, colors):
 
 if __name__ == '__main__':
     print('loading images...')
-    imgL = cv.pyrDown(cv.imread('L0.png'))  # downscale images for faster processing
-    imgR = cv.pyrDown(cv.imread('R0.png'))
+    imgL = cv.imread('L2.png')  # downscale images for faster processing
+    imgR = cv.imread('R2.png')
 
     # disparity range is tuned for 'aloe' image pair
     window_size = 7
-    min_disp = 0
+    min_disp = 8
     num_disp = 112-min_disp
     stereo = cv.StereoSGBM_create(minDisparity = min_disp,
         numDisparities = num_disp,
@@ -85,21 +85,23 @@ if __name__ == '__main__':
     rstereo = cv.ximgproc.createRightMatcher(stereo)
     dispr = rstereo.compute(fixedRight, fixedLeft).astype(np.float32) / 16.0
     print(dispr)
-    wls_filter = cv.ximgproc.createDisparityWLSFilter(stereo);
-    wls_filter.setLambda(8000);
-    wls_filter.setSigmaColor(0.8);
-    dispf = wls_filter.filter(disp, fixedLeft, disparity_map_right=dispr);
 
+    wls_filter = cv.ximgproc.createDisparityWLSFilter(stereo)
+    wls_filter.setLambda(8000)
+    wls_filter.setSigmaColor(2)
+    dispf = wls_filter.filter(disp, fixedLeft, disparity_map_right=dispr)
+
+    print(dispf)
     print('generating 3d point cloud...',)
     h, w = fixedLeft.shape[:2]
-    f = 0.6*w                          # guess for focal length
+    f = 0.6 * w                          # guess for focal length
     Q = np.float32([[1, 0, 0, -0.5*w],
                     [0,-1, 0,  0.5*h], # turn points 180 deg around x-axis,
                     [0, 0, 0,     -f], # so that y-axis looks up
                     [0, 0, 1,      0]])
-    points = cv.reprojectImageTo3D(disp, Q)
+    points = cv.reprojectImageTo3D(dispf, Q)
     colors = cv.cvtColor(fixedLeft, cv.COLOR_BGR2RGB)
-    mask = disp > disp.min()+1
+    mask = dispf > dispf.min()
     out_points = points[mask]
     out_colors = colors[mask]
     out_fn = 'out.ply'
