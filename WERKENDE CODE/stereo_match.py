@@ -13,6 +13,9 @@ from __future__ import print_function
 
 import numpy as np
 import cv2 as cv
+import time
+import math
+import copy
 
 ply_header = '''ply
 format ascii 1.0
@@ -26,6 +29,33 @@ property uchar blue
 end_header
 '''
 
+
+def norm(v1, v2):
+    """
+    :return: distance between 2 vectors
+    """
+    return np.linalg.norm(np.subtract(v1, v2))
+
+
+def points_to_check(i, j, filter):
+    """
+    :param i: pixel row
+    :param j: pixel column
+    :param filter: groups matrix
+    :return: all adjacent pixels not yet in a group
+    """
+    to_get = []
+    if i != 0 and filter[i-1][j] is None:
+        to_get += [(i-1, j)]
+    if i != len(filter)-1 and filter[i+1][j] is None:
+        to_get += [(i+1, j)]
+    if j != 0 and filter[i][j-1] is None:
+        to_get += [(i, j-1)]
+    if j != len(filter[i])-1 and filter[i][j+1] is None:
+        to_get += [(i, j+1)]
+    return to_get
+
+
 def write_ply(fn, verts, colors):
     verts = verts.reshape(-1, 3)
     colors = colors.reshape(-1, 3)
@@ -36,6 +66,7 @@ def write_ply(fn, verts, colors):
 
 
 if __name__ == '__main__':
+    start = time.time()
     print('loading images...')
     imgL = cv.imread('L2.png')  # downscale images for faster processing
     imgR = cv.imread('R2.png')
@@ -75,24 +106,24 @@ if __name__ == '__main__':
     grayLeft = cv.cvtColor(fixedLeft, cv.COLOR_BGR2GRAY)
     grayRight = cv.cvtColor(fixedRight, cv.COLOR_BGR2GRAY)
 
-    print('computing disparity...')
+    #print('computing disparity...')
     disp = stereo.compute(fixedLeft, fixedRight).astype(np.float32) / 16.0
 
-    cv.imshow('left', fixedLeft)
-    cv.imshow('right', fixedRight)
-    cv.imshow('disparity', (disp-min_disp)/num_disp)
+    #cv.imshow('left', fixedLeft)
+    #cv.imshow('right', fixedRight)
+    #cv.imshow('disparity', (disp-min_disp)/num_disp)
 
     rstereo = cv.ximgproc.createRightMatcher(stereo)
     dispr = rstereo.compute(fixedRight, fixedLeft).astype(np.float32) / 16.0
-    print(dispr)
+    #print(dispr)
 
     wls_filter = cv.ximgproc.createDisparityWLSFilter(stereo)
     wls_filter.setLambda(8000)
-    wls_filter.setSigmaColor(2)
+    wls_filter.setSigmaColor(2.5)
     dispf = wls_filter.filter(disp, fixedLeft, disparity_map_right=dispr)
 
-    print(dispf)
-    print('generating 3d point cloud...',)
+    #print(dispf)
+    #print('generating 3d point cloud...',)
     h, w = fixedLeft.shape[:2]
     f = 0.6 * w                          # guess for focal length
     Q = np.float32([[1, 0, 0, -0.5*w],
@@ -101,14 +132,77 @@ if __name__ == '__main__':
                     [0, 0, 1,      0]])
     points = cv.reprojectImageTo3D(dispf, Q)
     colors = cv.cvtColor(fixedLeft, cv.COLOR_BGR2RGB)
-    mask = dispf > dispf.min()
-    out_points = points[mask]
-    out_colors = colors[mask]
-    out_fn = 'out.ply'
-    write_ply('out.ply', out_points, out_colors)
-    print('%s saved' % 'out.ply')
 
+    print("start filtering")
 
-    cv.imshow('disparity filtered', (dispf-min_disp)/num_disp)
-    cv.waitKey()
-    cv.destroyAllWindows()
+    # zieke hacks om 540 * 940 None's te krijgen
+    # [None] * x gaat niet, want obj gekoppeld
+    objects = []
+    for i in range(len(points)):
+        appending = []
+        for j in range(len(points[0])):
+            appending.append(None)
+        objects.append(appending)
+
+    # go search objects
+    counter = 1
+    for i in range(len(points)):
+        # calc every pixels once
+        for j in range(len(points[0])):
+            # if no group yet
+            if objects[i][j] is None:
+                # add to current group
+                objects[i][j] = counter
+                to_check = [(i, j)]
+                while len(to_check) > 0:
+                    p1 = to_check.pop()
+                    # get all adjacent pixels that don't have a group yet
+                    for p2 in points_to_check(p1[0], p1[1], objects):
+                        # if distance between points is less than 0.2
+                        if norm(points[p1[0]][p1[1]], points[p2[0]][p2[1]]) < 0.2: # 0.2 can be adjusted!
+                            # add to group and search adjacent pixels
+                            objects[p2[0]][p2[1]] = counter
+                            to_check += [p2]
+                # group is closed, next group
+                counter += 1
+
+    # convert to numpy array, needed for mask
+    for row in objects:
+        row = np.array(row)
+    objects = np.array(objects)
+
+    mask = dispf > dispf.min()+1
+    points = points[mask]
+    colors = colors[mask]
+    objects = objects[mask]
+
+    # count amount of pixels in group
+    numbers = {}
+    for i in range(0, len(objects)):
+        if objects[i] in numbers:
+            numbers[objects[i]] += 1
+        else:
+            numbers[objects[i]] = 1
+
+    # go search all groups with enough pixels
+    list_good_nb = []
+    for key, val in numbers.items():
+        if val > 5000: # amount of pixels in group, can be adjusted
+            print(val)
+            list_good_nb += [key]
+    print(len(numbers.keys()), len(list_good_nb))
+
+    # export all good groups
+    for i in range(0, len(list_good_nb)):
+        mask2 = objects == list_good_nb[i]
+        out_points = points[mask2]
+        out_colors = colors[mask2]
+
+        out_fn = 'out_' + str(i) + '.ply'
+        write_ply(out_fn, out_points, out_colors)
+        print('%s saved' % 'out.ply')
+
+    #cv.imshow('disparity filtered', (dispf-min_disp)/num_disp)
+    #cv.waitKey()
+    #cv.destroyAllWindows()
+    print(time.time()-start)
