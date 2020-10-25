@@ -34,7 +34,8 @@ def norm(v1, v2):
     """
     :return: distance between 2 vectors
     """
-    return np.linalg.norm(np.subtract(v1, v2))
+    return math.sqrt((v1[0]-v2[0])**2 + (v1[1]-v2[1])**2 + (v1[2]-v2[2])**2)
+    # return np.linalg.norm(np.subtract(v1, v2))
 
 
 def points_to_check(i, j, filter):
@@ -188,21 +189,20 @@ if __name__ == '__main__':
     list_good_nb = []
     for key, val in numbers.items():
         if val > 5000: # amount of pixels in group, can be adjusted
-            print(val)
             list_good_nb += [key]
     print(len(numbers.keys()), len(list_good_nb))
 
     # export all good groups
-    for i in range(0, len(list_good_nb)):
-        mask2 = objects == list_good_nb[i]
-        out_points = points[mask2]
-        out_colors = colors[mask2]
-
-        out_fn = 'out_' + str(i) + '.ply'
-        write_ply(out_fn, out_points, out_colors)
-        print('%s saved' % 'out.ply')
-
-    #cv.imshow('disparity filtered', (dispf-min_disp)/num_disp)
-    #cv.waitKey()
-    #cv.destroyAllWindows()
+    #for i in range(0, len(list_good_nb)):
+    #    mask2 = objects == list_good_nb[i]
+    #    out_points = points[mask2]
+    #    out_colors = colors[mask2]
+#
+    #    out_fn = 'out_' + str(i) + '.ply'
+    #    write_ply(out_fn, out_points, out_colors)
+    #    print('%s saved' % 'out.ply')
+#
+    ##cv.imshow('disparity filtered', (dispf-min_disp)/num_disp)
+    ##cv.waitKey()
+    ##cv.destroyAllWindows()
     print(time.time()-start)
