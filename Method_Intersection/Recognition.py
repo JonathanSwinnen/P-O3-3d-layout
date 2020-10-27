@@ -178,10 +178,9 @@ def Recognize_2(frame, one_or_two):
     hog = cv2.HOGDescriptor()
     hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
     gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-    (regions, _) = hog.detectMultiScale(frame,
-                                        winStride=(4, 4),
-                                        padding=(0, 0),
-                                        scale=1.2)
+    (regions, _) = hog.detectMultiScale(
+        frame, winStride=(4, 4), padding=(0, 0), scale=1.2
+    )
     #   points (x,y)
     faces_coordinates = []
     # if not len(faces) == 0:
@@ -192,11 +191,11 @@ def Recognize_2(frame, one_or_two):
         c = x + a
         d = y + a
         cv2.rectangle(frame, (c, d), (c + 6, d + 6), (0, 100, 250), 2)
-        faces_coordinates += [(x + w // 2, y + h // 2)]    
+        faces_coordinates += [(x + w // 2, y + h // 2)]
         #   display in the right window
     if one_or_two == 1:
         cv2.imshow("Recognition one...", frame)
     else:
         cv2.imshow("Recognition two...", frame)
-    
+
     return faces_coordinates

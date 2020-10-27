@@ -1,6 +1,6 @@
 import cv2
-from Location_Detection import XYZ_Point
-import Recognition
+from Location_Detection import XYZ # type: ignore
+import Recognition # type: ignore
 import numpy as np
 
 #   This file tries to combine everything in one:
@@ -66,7 +66,7 @@ while True:
         # TODO: recognition (Mathias en Mathias): find the best haarcascade and
         # for now:
         image_size = np.array([frame_1.shape[1], frame_1.shape[0]])
-        XYZ = XYZ_Point(
+        XYZ = XYZ_Point( # type: ignore
             image_size,
             fov,
             coordinates_1,
@@ -75,7 +75,7 @@ while True:
             coord_2,
             dir_1,
             dir_2,
-        )
+        ) 
         cv2.namedWindow("Position Map", cv2.WINDOW_NORMAL)
         #   MAYBE YOU'll HAVE TO INCLUDE A FULL path HERE, like so:
         #   grid = cv2.imread(r"C:\Users\peete\Documents\Burgi\2020-2021\P&O3\Grid_P_O_3.jpg")
