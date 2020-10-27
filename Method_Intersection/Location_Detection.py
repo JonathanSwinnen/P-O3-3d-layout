@@ -2,6 +2,7 @@ import numpy as np
 import math
 
 
+
 def XYZ_Point(
     image_size: np.ndarray,
     fov_horizontal,

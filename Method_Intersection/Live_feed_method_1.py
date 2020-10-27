@@ -1,5 +1,5 @@
 import cv2
-from Location_Detection import XYZ # type: ignore
+from Location_Detection import XYZ_Point #  type: ignore
 import Recognition # type: ignore
 import numpy as np
 
@@ -9,22 +9,23 @@ import numpy as np
 #       - location determination
 #       - distance calculation
 
-#   CALIBRATION
-(
-    fov,
-    dir_1,
-    dir_2,
-    coord_1,
-    coord_2,
-    camera_1,
-    camera_2,
-) = Recognition.Camera_calibration(3)
+calibrate = int(input("Do you want to calibrate the camera? (1:Yes, 0:No):\n"))
+if calibrate: 
+    #   CALIBRATION
+    (
+        fov,
+        dir_1,
+        dir_2,
+        coord_1,
+        coord_2,
+        camera_1,
+        camera_2,
+    ) = Recognition.Camera_calibration(3)
 
 #   IMAGE CAPTURING, select the desired number of cameras to be used (1 and 2) right here:
 cv2.namedWindow("Recognition one...")
 cv2.namedWindow("Recognition two...")
 
-font = cv2.FONT_HERSHEY_SIMPLEX
 
 while True:
     #   ret_1 is to check if a fail occurred,
@@ -63,8 +64,6 @@ while True:
     elif not (coordinates_2 == [] or coordinates_1 == []):
         # both camera's see a face
         # this frame needs to be saved and calculated!
-        # TODO: recognition (Mathias en Mathias): find the best haarcascade and
-        # for now:
         image_size = np.array([frame_1.shape[1], frame_1.shape[0]])
         XYZ = XYZ_Point( # type: ignore
             image_size,
@@ -92,7 +91,6 @@ while True:
                 (0, 0, 255),
                 -1,
             )
-            # cv2.putText(grid,Point[2],(int(Point[0]*200 + 20),int(1000 - (Point[1]*200))), font, 4,(255,255,255),2)
         cv2.resizeWindow("Position Map", 1000, 1000)
         cv2.imshow("Position Map", grid)
 

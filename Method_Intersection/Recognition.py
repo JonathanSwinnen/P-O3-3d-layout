@@ -27,7 +27,6 @@ def Camera_calibration(k):
         print("failed to grab frame_1")
     frame_shape = frame_cal_1.shape
     image_size = (frame_shape[1], frame_shape[0])
-    print("image size is: ", image_size)
 
     print(
         "____________________________________________________________________________________________CAMERA_POSITIONS______________"
