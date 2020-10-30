@@ -52,7 +52,7 @@ def calculate(camera_1, camera_2):
             print(
                 "__________look at the images. press any key._______________________________________________"
             )
-            
+
             print(
                 "____________________________________________________________________________________________EXPLANATION______________"
             )
@@ -64,7 +64,6 @@ def calculate(camera_1, camera_2):
             )
             print("also measure the 'x' coordinate of both points")
             print("Press space bar to stop the live feed and enter the values")
-
 
         #   making the center visible:
         cv2.rectangle(
@@ -113,7 +112,14 @@ def calculate(camera_1, camera_2):
     coord_2 = np.array([width, 0, height])
     cv2.destroyAllWindows()
 
-    calculated_dict = {"fov_h":fov_horizontal,"dir_1":dir_1,"dir_2":dir_2,"coord_1":coord_1,"coord_2":coord_2,"image_size":image_size}
+    calculated_dict = {
+        "fov_h": fov_horizontal,
+        "dir_1": dir_1,
+        "dir_2": dir_2,
+        "coord_1": coord_1,
+        "coord_2": coord_2,
+        "image_size": image_size,
+    }
     return calculated_dict
 
 
