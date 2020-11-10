@@ -3,8 +3,9 @@ import math
 
 
 class Positioner:
-    def __init__(self, calibration_values):
+    def __init__(self, calibration_values, uncertainty_range):
         self.calibration_values = calibration_values
+        self.uncertainty_range = uncertainty_range
 
     def get_XYZ(
         self,
@@ -228,9 +229,12 @@ class Positioner:
                 distance = np.linalg.norm(
                     np.cross(P2 - IP1, P2 - IP2)
                 ) / np.linalg.norm(Line_of_sight_1)
-                if not shortest_distance or distance < shortest_distance:
+                if not shortest_distance or distance <= shortest_distance-self.uncertainty_range:
                     shortest_distance = distance
                     closest_position = recognized_pos_2
+                elif shortest_distance-self.uncertainty_range < distance < shortest_distance+self.uncertainty_range:
+                    # TODO: zoeken welk de beste is via cost
+                    pass
 
             # closest match is found: closest_position
             P2 = (

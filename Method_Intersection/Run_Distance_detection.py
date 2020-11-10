@@ -1,6 +1,9 @@
 import Calibration
 from Detector import Detector
 from Positioner import *
+from Tracker import Tracker
+from time import perf_counter
+
 import cv2
 from math import floor
 
@@ -60,25 +63,41 @@ def get_frames(camera_1,camera_2):
     return frame_1, frame_2
 
 
+
 FILENAME = r"data\calib.pckl"
 detector = Detector()
 
 camera_1 , camera_2 = camera_setup()
 calibrated_values = calibrate_cameras()
+tracker = Tracker(2, 2, 1.2, 0.1)
 
 positioner = Positioner(calibrated_values)
 
 # TODO: GUI
+# TODO: adding & removing people (tracker.add_person, tracker.rm_person)
+
+start = perf_counter()
 
 while True:
     #   This loop embodies the main workings of this method
     frame_1, frame_2 = get_frames(camera_1, camera_2)
     
     if  frame_1 and frame_2:
-            
+
+        # dt calculation
+        stop = perf_counter()
+        dt = stop-start
+        start = stop
+
+        # make tracker prediction
+        prediction = tracker.predict(dt)
+
         #   recognize every person in every frame:
         coordinates_1, coordinates_2 = detector.detect_both_frames(frame_1, frame_2)
-        
+
+        labeled_coordinates_1 = list(map(lambda i: (i, coordinates_1[i]), range(len(coordinates_1))))
+        labeled_coordinates_2 = list(map(lambda i: (i, coordinates_2[i]), range(len(coordinates_2))))
+
         key = cv2.waitKey(1)
 
         #TODO: replace with GUI functions
@@ -101,7 +120,12 @@ while True:
             # both cameras recognize something
             # this frame needs to be saved and calculated!
             
-            XYZ = positioner.get_XYZ(coordinates_1,coordinates_2)
+            # detect points
+            dets = positioner.get_XYZ(coordinates_1,coordinates_2)
+            # update filter
+            tracked_points = tracker.update(dets)
+
+            #TODO: GUI UPDATE
     else:
         print("Frame skipped.")
 
