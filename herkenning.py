@@ -69,7 +69,11 @@ class PennFudanDataset(object):
         target = {}
         target["boxes"] = boxes
         target["labels"] = labels
+<<<<<<< HEAD
         # target["masks"] = masks # TODO no masks!
+=======
+        target["masks"] = None
+>>>>>>> 8a91f04cd4bc4eb68cda37713e7818aa4923bf17
         target["image_id"] = image_id
         target["area"] = area
         target["iscrowd"] = iscrowd
