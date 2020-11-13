@@ -1,0 +1,14 @@
+{
+    "classes": [
+        {
+            "title": "Head",
+            "shape": "rectangle",
+            "color": "#61891F",
+            "geometry_config": {},
+            "id": 2703995,
+            "hotkey": ""
+        }
+    ],
+    "tags": [],
+    "projectType": "images"
+}

@@ -10,68 +10,66 @@ import torchvision
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
-from engine import train_one_epoch, evaluate
-import utils
-import transforms as T
+# errors are fine, importing local files in ./pytorch_files/
+from pytorch_files.engine import train_one_epoch, evaluate
+import pytorch_files.utils as utils
+import pytorch_files.transforms as T
 
+from itertools import chain
+import pickle
 
 class PennFudanDataset(object):
-    def __init__(self, root, transforms):
-        self.root = root
+
+    def __init__(self, paths, transforms):
+        self.paths = paths
         self.transforms = transforms
         # load all image files, sorting them to
         # ensure that they are aligned
-        self.imgs = list(sorted(os.listdir("./PennFudanPed/PennFudanPed/PNGImages")))
-        self.masks = list(sorted(os.listdir("./PennFudanPed/PennFudanPed/PedMasks")))
+        self.imgs = []
+        for root, dirs, files in chain.from_iterable(os.walk(os.path.join(path, "img/")) for path in paths):
+            for file in files:
+                self.imgs += [os.path.join(root, file)]
+        self.imgs = sorted(self.imgs)
+
+        f = open('clean_annotations.pkl', 'rb')
+        self.ann = pickle.load(f)
+        f.close()
 
     def __getitem__(self, idx):
         # load images ad masks
-        img_path = os.path.join("./PennFudanPed/PennFudanPed/PNGImages", self.imgs[idx])
-        mask_path = os.path.join("./PennFudanPed/PennFudanPed/PedMasks", self.masks[idx])
+        img_path = self.imgs[idx]
         img = Image.open(img_path).convert("RGB")
         # note that we haven't converted the mask to RGB,
         # because each color corresponds to a different instance
         # with 0 being background
-        mask = Image.open(mask_path)
+        # mask = Image.open(mask_path)
 
-        mask = np.array(mask)
+        # mask = np.array(mask)
         # instances are encoded as different colors
-        obj_ids = np.unique(mask)
+        # obj_ids = np.unique(mask)
         # first id is the background, so remove it
-        obj_ids = obj_ids[1:]
+        # obj_ids = obj_ids[1:]
 
         # split the color-encoded mask into a set
         # of binary masks
-        masks = mask == obj_ids[:, None, None]
+        # masks = mask == obj_ids[:, None, None]
 
         # get bounding box coordinates for each mask
-        num_objs = len(obj_ids)
-        boxes = []
-        for i in range(num_objs):
-            pos = np.where(masks[i])
-            xmin = np.min(pos[1])
-            xmax = np.max(pos[1])
-            ymin = np.min(pos[0])
-            ymax = np.max(pos[0])
-            boxes.append([xmin, ymin, xmax, ymax])
-
+        boxes = self.ann[img_path]
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
-
         # there is only one class
-        labels = torch.ones((num_objs,), dtype=torch.int64)
-        masks = torch.as_tensor(masks, dtype=torch.uint8)
+        labels = torch.ones((len(boxes),), dtype=torch.int64)
+        # masks = torch.as_tensor(masks, dtype=torch.uint8)
 
         image_id = torch.tensor([idx])
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
-
         # suppose all instances are not crowd
-        iscrowd = torch.zeros((num_objs,), dtype=torch.int64)
+        iscrowd = torch.zeros((len(boxes),), dtype=torch.int64)
 
         target = {}
         target["boxes"] = boxes
         target["labels"] = labels
-        print(masks)
-        target["masks"] = masks
+        # target["masks"] = masks # TODO no masks!
         target["image_id"] = image_id
         target["area"] = area
         target["iscrowd"] = iscrowd
@@ -83,6 +81,7 @@ class PennFudanDataset(object):
 
     def __len__(self):
         return len(self.imgs)
+
 
 def get_model_instance_segmentation(num_classes):
     # load an instance segmentation model pre-trained pre-trained on COCO
@@ -113,14 +112,21 @@ def get_transform(train):
 
 
 def main():
-    print(torch.cuda.is_available())
+    #paths = ('./data/apart_0/', './data/meer_pers_0/', './data/zittend_0/')
+
+    # debugging
+    paths = ("./data/apart_0")
+
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
+    if torch.cuda.is_available():
+        print('Train on GPU.')
+    else:
+        print('Train on CPU.')
     # our dataset has two classes only - background and person
-    num_classes = 2
+    num_classes = 1
     # use our dataset and defined transformations
-    dataset = PennFudanDataset('./PennFudanPed', get_transform(train=True))
+    dataset = PennFudanDataset(paths, get_transform(train=True))
     dataset_test = PennFudanDataset('PennFudanPed', get_transform(train=False))
 
     # split the dataset in train and test set
@@ -163,8 +169,8 @@ def main():
         # evaluate on the test dataset
         evaluate(model, data_loader_test, device=device)
 
-    torch.save(model.state_dict(), "pedestrian_model.pt")
     print("That's it!")
-    
+
+
 if __name__ == "__main__":
     main()
