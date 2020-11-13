@@ -6,6 +6,7 @@ This file contains a class containing the logic for a person tracker using a Kal
 """
 
 from KalmanFilter import KalmanFilter
+import numpy as np
 
 class Kalman_person_tracker:
 
@@ -58,7 +59,8 @@ class Kalman_person_tracker:
             [x,y,z] of the updated filter position
         """
         if z != []:
-            self.pos = self.kf.update(z)
+            
+            self.pos = self.kf.update(np.array([z]).T)
         return self.pos
     
     

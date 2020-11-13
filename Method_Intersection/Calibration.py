@@ -14,12 +14,15 @@ def calculate(camera_1, camera_2):
         coord_1: coordinates of camera 1 (camera 1 is directly above the axis origin) -> coord_1 = np.array([0,0,height])
         coord_2: coordinates of camera 2 -> coord_2 = np.array([distance between cameras, 0, height])
     """
+
+    scale_down = int(input("enter a scaledown factor:\n"))
+
     #   getting the frame size:
     ret_cal_1, frame_cal_1 = camera_1.read()
     if not ret_cal_1:
         print("failed to grab frame_1")
     frame_shape = frame_cal_1.shape
-    image_size = (frame_shape[1], frame_shape[0])
+    image_size = (frame_shape[1]//scale_down, frame_shape[0]//scale_down)
 
     print(
         "____________________________________________________________________________________________CAMERA_POSITIONS______________"
@@ -33,7 +36,6 @@ def calculate(camera_1, camera_2):
     first_time = 1
     while True:
         #   SHOW POINTS FOR DIRECTIONS OF CAMERAS
-
         ret_cal_1, frame_cal_1 = camera_1.read()
         if not ret_cal_1:
             print("failed to grab frame_1")

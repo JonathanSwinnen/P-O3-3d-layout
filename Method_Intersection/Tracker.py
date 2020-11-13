@@ -85,7 +85,7 @@ class Tracker():
             person.predict()
             self.positions[person.id] = person.pos
 
-        return self.prediction
+        return self.positions
 
 
     def update(self, dets):
@@ -101,7 +101,11 @@ class Tracker():
         dictionary
             dictionary containing person id : [x,y,z] key-value pairs
         """
+
         # get indices of matching points with minimal cost combinations using Hungarian method
+        if len(dets) == 0:
+            return self.positions
+
         indices, _ = self.get_min_cost(dets)
         # update all kalman filters with matching points
         for (p_num, det_num) in indices:
@@ -133,7 +137,7 @@ class Tracker():
         i, j = 0, 0
 
         # create cost matrix
-        cost_matrix = np.zeros(len(dets), len(self.persons))
+        cost_matrix = np.zeros((len(dets), len(self.persons)))
         # loop over all people
         for person in self.persons:
             j = 0

@@ -282,3 +282,9 @@ class Positioner:
             ]
 
         return XYZ_POINTS
+    
+
+    def reprojectPoint(self, xyz):
+        # dummy
+        print(xyz)
+        return (xyz[0][0],xyz[1][0])

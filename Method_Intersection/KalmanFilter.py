@@ -26,7 +26,7 @@ class KalmanFilter(object):
             initial state vector
         u : np.array
             acceleration vector
-        std_acc : np.array
+        std_acc : float
             acceleration standard deviation
         std_meas : np.array
             standard deviation of measurement for x,y,z
@@ -46,34 +46,36 @@ class KalmanFilter(object):
         # Define the State Transition Matrix A
         self.A = np.block(
             [[np.eye(3), self.dt * np.eye(3)], [np.zeros((3, 3)), np.eye(3)]]
-        )
+        ).astype(float)
 
         # Define the Control Input Matrix B
         self.B = np.block(
             [[np.eye(3) * (1 / 2) * (self.dt) ** 2], [np.eye(3) * self.dt]]
-        )
+        ).astype(float)
 
         # Define Measurement Mapping Matrix
-        self.H = np.block([[np.eye(3), np.zeros((3, 3))]])
+        self.H = np.block([[np.eye(3), np.zeros((3, 3))]]).astype(float)
+
+        TL = ((self.dt ** 4) / 4) * np.eye(3,3)
+        TR = ((self.dt ** 3) / 2) * np.eye(3,3)
+        BL = ((self.dt ** 3) / 2) * np.eye(3,3)
+        BR = (self.dt ** 2) * np.eye(3,3)
 
         #Initial Process Noise Covariance
         self.Q = self.std_acc ** 2 * np.block(
             [
-                [
-                    ((self.dt ** 4) / 4) * np.eye(3),
-                    ((self.dt ** 3) / 2) * np.eye(3),
-                ],
-                [((self.dt ** 3) / 2) * np.eye(3), self.dt ** 2 * np.eye(3)],
+                [ TL, TR ],
+                [ BR, BL ]
             ]
-        )
+        ).astype(float)
 
         #Initial Measurement Noise Covariance
         self.R = np.matrix([[std_meas[0]**2,0,0],
                            [0, std_meas[1]**2,0],
-                           [0,0,std_meas[2]**2]])
+                           [0,0,std_meas[2]**2]]).astype(float)
 
         #Initial Covariance Matrix
-        self.P = np.eye(self.A.shape[1])
+        self.P = np.eye(self.A.shape[1]).astype(float)
 
 
     def update_dt(self, dt):
@@ -91,12 +93,12 @@ class KalmanFilter(object):
        # Define the State Transition Matrix A
         self.A = np.block(
             [[np.eye(3), self.dt * np.eye(3)], [np.zeros((3, 3)), np.eye(3)]]
-        )
+        ).astype(float)
 
         # Define the Control Input Matrix B
         self.B = np.block(
             [[np.eye(3) * (1 / 2) * (self.dt) ** 2], [np.eye(3) * self.dt]]
-        )
+        ).astype(float)
 
         #Initial Process Noise Covariance
         self.Q = self.std_acc ** 2 * np.block(
@@ -107,7 +109,7 @@ class KalmanFilter(object):
                 ],
                 [((self.dt ** 3) / 2) * np.eye(3), self.dt ** 2 * np.eye(3)],
             ]
-        )
+        ).astype(float)
 
     def predict(self):
         """Predicts next X,Y,Z coordinates 
@@ -148,6 +150,9 @@ class KalmanFilter(object):
         K = np.dot(np.dot(self.P, self.H.T), np.linalg.inv(S))  #Eq.(11)
 
         self.x = np.round(self.x + np.dot(K, (z - np.dot(self.H, self.x))))   #Eq.(12)
+
+        print(self.x)
+
 
         I = np.eye(self.H.shape[1])
 
