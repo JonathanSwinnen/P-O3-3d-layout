@@ -10,39 +10,44 @@ import torchvision
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
+# errors are fine, importing local files in ./pytorch_files/
 from pytorch_files.engine import train_one_epoch, evaluate
 import pytorch_files.utils
 import pytorch_files.transforms as T
 
+from itertools import chain
 
 class PennFudanDataset(object):
-    def __init__(self, root, transforms):
-        self.root = root
+
+    def __init__(self, paths, transforms):
+        self.paths = paths
         self.transforms = transforms
         # load all image files, sorting them to
         # ensure that they are aligned
-        self.imgs = list(sorted(os.listdir(os.path.join(root, "PNGImages"))))
-        self.masks = list(sorted(os.listdir(os.path.join(root, "PedMasks"))))
+        self.imgs = []
+        for root, dirs, files in chain.from_iterable(os.walk(os.path.join(path, "img/")) for path in paths):
+            for file in files:
+                self.imgs += [os.path.join(root, file)]
+        self.imgs = sorted(self.imgs)
 
     def __getitem__(self, idx):
         # load images ad masks
-        img_path = os.path.join(self.root, "PNGImages", self.imgs[idx])
-        mask_path = os.path.join(self.root, "PedMasks", self.masks[idx])
+        img_path = self.imgs[idx]
         img = Image.open(img_path).convert("RGB")
         # note that we haven't converted the mask to RGB,
         # because each color corresponds to a different instance
         # with 0 being background
-        mask = Image.open(mask_path)
+        # mask = Image.open(mask_path)
 
-        mask = np.array(mask)
+        # mask = np.array(mask)
         # instances are encoded as different colors
-        obj_ids = np.unique(mask)
+        # obj_ids = np.unique(mask)
         # first id is the background, so remove it
-        obj_ids = obj_ids[1:]
+        # obj_ids = obj_ids[1:]
 
         # split the color-encoded mask into a set
         # of binary masks
-        masks = mask == obj_ids[:, None, None]
+        # masks = mask == obj_ids[:, None, None]
 
         # get bounding box coordinates for each mask
         num_objs = len(obj_ids)
@@ -111,57 +116,58 @@ def get_transform(train):
 
 
 def main():
-    print("good")
+    paths = ('./data/apart_0/', './data/meer_pers_0/', './data/zittend_0/')
+
     # train on the GPU or on the CPU, if a GPU is not available
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
-    # our dataset has two classes only - background and person
-    num_classes = 2
-    # use our dataset and defined transformations
-    dataset = PennFudanDataset('PennFudanPed', get_transform(train=True))
-    dataset_test = PennFudanDataset('PennFudanPed', get_transform(train=False))
-
-    # split the dataset in train and test set
-    indices = torch.randperm(len(dataset)).tolist()
-    dataset = torch.utils.data.Subset(dataset, indices[:-50])
-    dataset_test = torch.utils.data.Subset(dataset_test, indices[-50:])
-
-    # define training and validation data loaders
-    data_loader = torch.utils.data.DataLoader(
-        dataset, batch_size=2, shuffle=True, num_workers=4,
-        collate_fn=utils.collate_fn)
-
-    data_loader_test = torch.utils.data.DataLoader(
-        dataset_test, batch_size=1, shuffle=False, num_workers=4,
-        collate_fn=utils.collate_fn)
-
-    # get the model using our helper function
-    model = get_model_instance_segmentation(num_classes)
-
-    # move model to the right device
-    model.to(device)
-
-    # construct an optimizer
-    params = [p for p in model.parameters() if p.requires_grad]
-    optimizer = torch.optim.SGD(params, lr=0.005,
-                                momentum=0.9, weight_decay=0.0005)
-    # and a learning rate scheduler
-    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
-                                                   step_size=3,
-                                                   gamma=0.1)
-
-    # let's train it for 10 epochs
-    num_epochs = 10
-
-    for epoch in range(num_epochs):
-        # train for one epoch, printing every 10 iterations
-        train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10)
-        # update the learning rate
-        lr_scheduler.step()
-        # evaluate on the test dataset
-        evaluate(model, data_loader_test, device=device)
-
-    print("That's it!")
+    #device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+#
+    ## our dataset has two classes only - background and person
+    #num_classes = 2
+    ## use our dataset and defined transformations
+    dataset = PennFudanDataset(paths, get_transform(train=True))
+    #dataset_test = PennFudanDataset('PennFudanPed', get_transform(train=False))
+#
+    ## split the dataset in train and test set
+    #indices = torch.randperm(len(dataset)).tolist()
+    #dataset = torch.utils.data.Subset(dataset, indices[:-50])
+    #dataset_test = torch.utils.data.Subset(dataset_test, indices[-50:])
+#
+    ## define training and validation data loaders
+    #data_loader = torch.utils.data.DataLoader(
+    #    dataset, batch_size=2, shuffle=True, num_workers=4,
+    #    collate_fn=utils.collate_fn)
+#
+    #data_loader_test = torch.utils.data.DataLoader(
+    #    dataset_test, batch_size=1, shuffle=False, num_workers=4,
+    #    collate_fn=utils.collate_fn)
+#
+    ## get the model using our helper function
+    #model = get_model_instance_segmentation(num_classes)
+#
+    ## move model to the right device
+    #model.to(device)
+#
+    ## construct an optimizer
+    #params = [p for p in model.parameters() if p.requires_grad]
+    #optimizer = torch.optim.SGD(params, lr=0.005,
+    #                            momentum=0.9, weight_decay=0.0005)
+    ## and a learning rate scheduler
+    #lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
+    #                                               step_size=3,
+    #                                               gamma=0.1)
+#
+    ## let's train it for 10 epochs
+    #num_epochs = 10
+#
+    #for epoch in range(num_epochs):
+    #    # train for one epoch, printing every 10 iterations
+    #    train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10)
+    #    # update the learning rate
+    #    lr_scheduler.step()
+    #    # evaluate on the test dataset
+    #    evaluate(model, data_loader_test, device=device)
+#
+    #print("That's it!")
 
 
 if __name__ == "__main__":

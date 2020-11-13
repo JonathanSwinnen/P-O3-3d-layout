@@ -3,7 +3,7 @@
 *.pt
 *.pth
 *.avi
-*.pkl
+#*.pkl
 *.zip
 
 Hoofdherkenning/data/
