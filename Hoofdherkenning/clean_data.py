@@ -14,11 +14,18 @@ for root, dirs, files in chain.from_iterable(os.walk(os.path.join(path, "ann/"))
             all_boxes = json.load(f)["objects"]
             boxes = []
             for box in all_boxes:
-                boxes += [box["points"]["exterior"][0] + box["points"]["exterior"][1]]
+                x1, y1 = box["points"]["exterior"][0]
+                x2, y2 = box["points"]["exterior"][1]
+                if x1 > x2:
+                    x1, x2 = x2, x1
+                if y1 > y2:
+                    y1, y2 = y2, y1
+                # xmin, ymin, xmax, ymax
+                boxes.append([x1, y1, x2, y2])
         data[full_path[:-5].replace("ann","img")] = boxes
 
 # Saving the objects:
-with open('clean_anotations.pkl', 'wb') as f:
+with open('clean_annotations.pkl', 'wb') as f:
     pickle.dump(data, f)
 
 ## Getting back the objects:
