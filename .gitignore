@@ -6,6 +6,8 @@
 *.pkl
 *.zip
 
+Hoofdherkenning/data/
+
 ### Python template
 # Byte-compiled / optimized / DLL files
 __pycache__/
