@@ -1,4 +1,5 @@
 import cv2
+import math
 import numpy as np
 import pickle
 
@@ -113,6 +114,35 @@ def calculate(camera_1, camera_2):
     coord_1 = np.array([0, 0, height])
     coord_2 = np.array([width, 0, height])
     cv2.destroyAllWindows()
+
+
+    print("Calculating directional unit vectors")
+    #   directions of the axis of the image on this plane:
+    #   we want to create "normalized" vectors that follow both the axis of the image on this projection plane
+    #           "normalized": their length is the projected length of 1 pixel on this plan
+    #   x1 is horizontal, lateral to self.calibration_values["dir_1"]
+    x1 = np.cross(np.array([0, 0, 1]), dir_1)
+    #   we say x1's direction to have a positive x-value
+    if x1[0] < 0:
+        x1 = -x1
+
+
+    fov_horizontal_rad = (fov_horizontal / 180) * math.pi
+    #   get a diagonal field of view (for ease further)
+    convert_to_diag = math.sqrt(image_size[0] ** 2 + image_size[1] ** 2) / image_size[0]
+
+    fov = fov_horizontal_rad * convert_to_diag
+
+    #   calculation of the size of a pixel:
+    size_pixel = (np.tan(fov / 2)) / (math.sqrt((image_size[0]) ** 2 + (image_size[1]) ** 2))
+    
+    # TODO : VERDER FIXEN VANAF HIER
+
+    #   normalize x1 to be the same size as a pixel
+    x1_norm = np.linalg.norm(x1)
+    x1 = x1 / x1_norm  #   x is 1m long
+    x1 = x1 * size_pixel  #    x is 1 pixel long
+
 
     calculated_dict = {
         "fov_h": fov_horizontal,

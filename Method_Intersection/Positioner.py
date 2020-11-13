@@ -67,30 +67,7 @@ class Positioner:
                 + self.calibration_values["coord_1"]
             )
 
-            #   directions of the axis of the image on this plane:
-            #   we want to create "normalized" vectors that follow both the axis of the image on this projection plane
-            #           "normalized": their length is the projected length of 1 pixel on this plane
-
-            #   x1 is horizontal, lateral to self.calibration_values["dir_1"]
-            horizontal_rg = np.array([0, 0, 1])
-            x1 = np.cross(horizontal_rg, self.calibration_values["dir_1"])
-
-            #   we say x1's direction to have a positive x-value
-            if x1[0] < 0:
-                x1 = -x1
-
-            #   calculation of the size of a pixel:
-            size_pixel = (2 * d * np.tan(fov / 2)) / (
-                math.sqrt(
-                    (self.calibration_values["image_size"][0]) ** 2
-                    + (self.calibration_values["image_size"][1]) ** 2
-                )
-            )
-
-            #   normalize x1 to be the same size as a pixel
-            x1_norm = np.linalg.norm(x1)
-            x1 = x1 / x1_norm  #   x is 1m long
-            x1 = x1 * size_pixel  #    x is 1 pixel long
+            # TODO: HIER IS DIE x stuff weggeknipt
 
             #   y1 is lateral to self.calibration_values["dir_1"] and in a vertical plane
             #       this vertical plane has self.calibration_values["dir_1"] and the vertical vector in it:
@@ -285,6 +262,6 @@ class Positioner:
     
 
     def reprojectPoint(self, xyz):
-        # dummy
+        # TODO: vervang deze placeholder code met projectie
         print(xyz)
         return (xyz[0][0],xyz[1][0])
