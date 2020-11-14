@@ -5,7 +5,7 @@ from itertools import chain
 
 
 data = dict()
-paths = ('./data/apart_0/', './data/meer_pers_0/', './data/zittend_0/', './data/apart_1/', './data/meer_pers_1/', './data/zittend_1/')
+paths = ('./data/apart_0/', './data/meer_pers_0/', './data/zittend_0/', './data/apart_1/', './data/meer_pers_1/', './data/zittend_1/', './data/zz_testing/')
 
 for root, dirs, files in chain.from_iterable(os.walk(os.path.join(path, "ann/")) for path in paths):
     for file in files:
@@ -16,6 +16,9 @@ for root, dirs, files in chain.from_iterable(os.walk(os.path.join(path, "ann/"))
             for box in all_boxes:
                 x1, y1 = box["points"]["exterior"][0]
                 x2, y2 = box["points"]["exterior"][1]
+                if x1 == x2 or y1 == y2:
+                    print(x1, y1, x2, y2)
+                    print(full_path)
                 if x1 > x2:
                     x1, x2 = x2, x1
                 if y1 > y2:

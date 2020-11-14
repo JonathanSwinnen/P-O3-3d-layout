@@ -13,7 +13,7 @@ import pycocotools.mask as mask_util
 
 from collections import defaultdict
 
-import pytorch_files.utils
+import pytorch_files.utils as utils
 
 
 class CocoEvaluator(object):
