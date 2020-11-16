@@ -8,10 +8,10 @@ import cv2
 from math import floor
 
 dirname = os.path.dirname(__file__)
-# vid_path_1 = os.path.join(dirname, "data/videos/output_apart_0.avi")
-# vid_path_2 = os.path.join(dirname, "data/videos/output_apart_1.avi")
-vid_path_1 = os.path.join(dirname, "data/videos/output_one_person_0.avi")
-vid_path_2 = os.path.join(dirname, "data/videos/output_one_person_1.avi")
+vid_path_1 = os.path.join(dirname, "data/videos/output_apart_0.avi")
+vid_path_2 = os.path.join(dirname, "data/videos/output_apart_1.avi")
+# vid_path_1 = os.path.join(dirname, "data/videos/output_one_person_0.avi")
+# vid_path_2 = os.path.join(dirname, "data/videos/output_one_person_1.avi")
 
 CALIB_PATH = os.path.join(dirname, "data/calib.pckl")
 
@@ -90,9 +90,9 @@ calibrated_values = calibrate_cameras()
 image_size = calibrated_values["image_size"]
 
 u = 0 * np.ones((3, 1))
-stac = 30
-a = 1
-b = 40
+stac = 100
+a = 3
+b = 80
 stdm = np.array([[a],[a],[b]])
 
 tracker = Tracker(u, stac, stdm, 0.1)
