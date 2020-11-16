@@ -74,13 +74,15 @@ class Tracker():
             dictionary containing person id : [x,y,z] key-value pairs
         """
         self.positions = dict()
+        updated_already = False
         # loop through all tracked people
         for person in self.persons:
 
             # update sampling time if necessary
-            if dt is not None:
+            if dt is not None and not updated_already:
                 person.kf.update_dt(dt)
-
+                updated_already = True
+                
             # predict next position
             person.predict()
             self.positions[person.id] = person.pos
@@ -137,7 +139,10 @@ class Tracker():
         i, j = 0, 0
 
         # create cost matrix
-        cost_matrix = np.zeros((len(dets), len(self.persons)))
+
+        #TODO: ONDERDSTE WEGGECOMMENTE IS DE JUITSE ALS ADDPERSON WERKT!!!
+        # cost_matrix = np.zeros((len(dets), len(self.persons)))
+        cost_matrix = np.zeros((len(dets), len(dets)))
         # loop over all people
         for person in self.persons:
             j = 0

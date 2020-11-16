@@ -34,21 +34,6 @@ class Positioner:
 
         XYZ_POINTS = []
 
-        #   get a normalized vector of both the directions of the cameras
-        rg1_norm = np.linalg.norm(self.calibration_values["dir_1"])
-        rg2_norm = np.linalg.norm(self.calibration_values["dir_2"])
-        self.calibration_values["dir_1"] = self.calibration_values["dir_1"] / rg1_norm
-        self.calibration_values["dir_2"] = self.calibration_values["dir_2"] / rg2_norm
-        #   get the field of view in Radians
-        fov_horizontal_rad = (self.calibration_values["fov_h"] / 180) * math.pi
-        #   get a diagonal field of view (for ease further)
-        convert_to_diag = (
-            math.sqrt(
-                self.calibration_values["image_size"][0] ** 2
-                + self.calibration_values["image_size"][1] ** 2
-            )
-        ) / (self.calibration_values["image_size"][0])
-        fov = fov_horizontal_rad * convert_to_diag
 
         # TODO: optimise: delete already calculated points
 
@@ -67,23 +52,9 @@ class Positioner:
                 + self.calibration_values["coord_1"]
             )
 
+
+
             # TODO: HIER IS DIE x stuff weggeknipt
-
-            #   y1 is lateral to self.calibration_values["dir_1"] and in a vertical plane
-            #       this vertical plane has self.calibration_values["dir_1"] and the vertical vector in it:
-            vertical_rg = np.cross(
-                self.calibration_values["dir_1"], np.array([0, 0, 1])
-            )
-            y1 = np.cross(vertical_rg, self.calibration_values["dir_1"])
-
-            #   we say y1's direction to have a negative y-value
-            if y1[1] > 0:
-                y1 = -y1
-
-            #   normalize y1 as the size of one pixel
-            y1_norm = np.linalg.norm(y1)
-            y1 = y1 / y1_norm  #   is nu 1m lang
-            y1 = y1 * size_pixel  #    is nu 1 pixel lang
 
             #   now we can determine the location of the recognized point in space (P1)
             #       first, determine the middle of the image:
@@ -97,8 +68,8 @@ class Positioner:
             # P1 can be calculated!
             P1 = (
                 M1
-                + (afb_pos_1[0] - M_afbeelding[0]) * x1
-                + (afb_pos_1[1] - M_afbeelding[1]) * y1
+                + (afb_pos_1[0] - M_afbeelding[0]) * self.calibration_values["x1"]
+                + (afb_pos_1[1] - M_afbeelding[1]) * self.calibration_values["y1"]
             )
 
             #   Now we need to find line C1P1 in the second image
@@ -115,24 +86,6 @@ class Positioner:
             #           we'll need these later, so let's calculate x2,y2
             #           x2 is allong the intersection of horizontal plane and image plane 2
 
-            x2 = np.cross(horizontal_rg, self.calibration_values["dir_2"])
-
-            #   x2's x-coordinate is positive:
-            if x2[0] < 0:
-                x2 = -x2
-            x2_norm = np.linalg.norm(x2)
-            x2 = x2 / x2_norm  #   now it is 1m long
-
-            #   now let's find y2
-            #       the plane made by C2M2 and (0,0,1) intersects bv2 allong y2
-            C2M2 = M2 - self.calibration_values["coord_2"]
-            verticaal_rg_2 = np.cross(C2M2, np.array([0, 0, 1]))
-            y2 = np.cross(verticaal_rg_2, self.calibration_values["dir_2"])
-            if y2[2] > 0:
-                y2 = -y2
-            y2_norm = np.linalg.norm(y2)
-            y2 = y2 / y2_norm  #   now it is 1m long
-
             #   To find the intersections, two linear systems need to be computed (see calculations on paper (later in pdf))
             #   this linear system determines the intersection of line C1C2 and image plane 2
             #
@@ -143,9 +96,21 @@ class Positioner:
             )
             A = np.array(
                 [
-                    [-C1C2[0], x2[0], y2[0]],
-                    [-C1C2[1], x2[1], y2[1]],
-                    [-C1C2[2], x2[2], y2[2]],
+                    [
+                        -C1C2[0],
+                        self.calibration_values["x2"][0],
+                        self.calibration_values["y2"][0],
+                    ],
+                    [
+                        -C1C2[1],
+                        self.calibration_values["x2"][1],
+                        self.calibration_values["y2"][1],
+                    ],
+                    [
+                        -C1C2[2],
+                        self.calibration_values["x2"][2],
+                        self.calibration_values["y2"][2],
+                    ],
                 ]
             )
             b = self.calibration_values["coord_1"] - M2
@@ -163,9 +128,21 @@ class Positioner:
             P1C2 = self.calibration_values["coord_2"] - P1
             A = np.array(
                 [
-                    [-P1C2[0], x2[0], y2[0]],
-                    [-P1C2[1], x2[1], y2[1]],
-                    [-P1C2[2], x2[2], y2[2]],
+                    [
+                        -P1C2[0],
+                        self.calibration_values["x2"][0],
+                        self.calibration_values["y2"][0],
+                    ],
+                    [
+                        -P1C2[1],
+                        self.calibration_values["x2"][1],
+                        self.calibration_values["y2"][1],
+                    ],
+                    [
+                        -P1C2[2],
+                        self.calibration_values["x2"][2],
+                        self.calibration_values["y2"][2],
+                    ],
                 ]
             )
             b = P1 - M2
@@ -187,10 +164,6 @@ class Positioner:
             #       the intersection of the line between this point and self.calibration_values["coord_2"] and the first line C1P1 is the XYZ point!
 
             #   P2 is the point of the person in camera2's image
-            #   normalize x2 and y2 as the size of one pixel
-            x2 = x2 * size_pixel
-            y2 = y2 * size_pixel
-
             #   for every detected point on image_2: find the distance, and determine which is most likely to be the right one
             distance = None
             closest_position = None
@@ -199,25 +172,33 @@ class Positioner:
             for recognized_pos_2 in points_camera_2:
                 P2 = (
                     M2
-                    + (recognized_pos_2[0] - M_afbeelding[0]) * x2
-                    + (recognized_pos_2[1] - M_afbeelding[1]) * y2
+                    + (recognized_pos_2[0] - M_afbeelding[0])
+                    * self.calibration_values["x2"]
+                    + (recognized_pos_2[1] - M_afbeelding[1])
+                    * self.calibration_values["y2"]
                 )
                 #   find distance of P2 to Line_of_Sight_1, via formula:
                 distance = np.linalg.norm(
                     np.cross(P2 - IP1, P2 - IP2)
                 ) / np.linalg.norm(Line_of_sight_1)
-                if not shortest_distance or distance <= shortest_distance-self.uncertainty_range:
+                if not shortest_distance or distance <= shortest_distance : #- self.uncertainty_range
                     shortest_distance = distance
                     closest_position = recognized_pos_2
-                elif shortest_distance-self.uncertainty_range < distance < shortest_distance+self.uncertainty_range:
-                    # TODO: zoeken welk de beste is via cost
-                    pass
+                # elif (
+                #     shortest_distance - self.uncertainty_range
+                #     < distance
+                #     < shortest_distance + self.uncertainty_range
+                # ):
+                #     # TODO: zoeken welk de beste is via cost
+                #     pass
 
             # closest match is found: closest_position
             P2 = (
                 M2
-                + (closest_position[0] - M_afbeelding[0]) * x2
-                + (closest_position[1] - M_afbeelding[1]) * y2
+                + (closest_position[0] - M_afbeelding[0])
+                * self.calibration_values["x2"]
+                + (closest_position[1] - M_afbeelding[1])
+                * self.calibration_values["y2"]
             )
 
             #   shortest line between this point and line of sight:
@@ -255,13 +236,96 @@ class Positioner:
 
             solution_4 = np.linalg.lstsq(A, b, rcond=-1)
             XYZ_POINTS += [
-                solution_4[0][0] * Line_1 + self.calibration_values["coord_1"]
+                (solution_4[0][0] * Line_1 + self.calibration_values["coord_1"])
             ]
 
         return XYZ_POINTS
-    
 
     def reprojectPoint(self, xyz):
         # TODO: vervang deze placeholder code met projectie
-        print(xyz)
-        return (xyz[0][0],xyz[1][0])
+
+        xyz = np.array([xyz[0][0], xyz[1][0], xyz[2][0]])
+        # xyz = np.array([xyz[0][0], xyz[1][0], 1.50])
+
+        # Center of each image plane:
+        d = 0.5
+        M1 = self.calibration_values["coord_1"] + d * self.calibration_values["dir_1"]
+
+        M2 = self.calibration_values["coord_2"] + d * self.calibration_values["dir_2"]
+
+
+        Line_sight_1 = xyz - self.calibration_values["coord_1"] 
+        Line_sight_2 = xyz - self.calibration_values["coord_2"]
+        # Calculate intersection of the line from xyz to each image sensor with the image planes:
+        # print([
+                # [
+                    # Line_sight_1[0],
+                    # self.calibration_values["x1"][0],
+                    # self.calibration_values["y1"][0],
+                # ],
+                # [
+                    # Line_sight_1[1],
+                    # self.calibration_values["x1"][1],
+                    # self.calibration_values["y1"][1],
+                # ],
+                # [
+                    # Line_sight_1[2],
+                    # self.calibration_values["x1"][2],
+                    # self.calibration_values["y1"][2],
+                # ]
+            # ])
+        A1 = np.array(
+            [
+                [
+                    Line_sight_1[0],
+                    self.calibration_values["x1"][0],
+                    self.calibration_values["y1"][0],
+                ],
+                [
+                    Line_sight_1[1],
+                    self.calibration_values["x1"][1],
+                    self.calibration_values["y1"][1],
+                ],
+                [
+                    Line_sight_1[2],
+                    self.calibration_values["x1"][2],
+                    self.calibration_values["y1"][2],
+                ]
+            ]
+        ) 
+
+        A2 = np.array(
+            [
+                [
+                    Line_sight_2[0],
+                    self.calibration_values["x2"][0],
+                    self.calibration_values["y2"][0],
+                ],
+                [
+                    Line_sight_2[1],
+                    self.calibration_values["x2"][1],
+                    self.calibration_values["y2"][1],
+                ],
+                [
+                    Line_sight_2[2],
+                    self.calibration_values["x2"][2],
+                    self.calibration_values["y2"][2],
+                ]
+            ]
+        )
+
+        b1 = xyz-M1
+        b2 = xyz-M2
+
+        solution_1 = np.linalg.solve(A1, b1)
+
+        solution_2 = np.linalg.solve(A2, b2)
+
+
+
+
+        middle_pixel = (self.calibration_values["image_size"][0]//2, self.calibration_values["image_size"][1]//2)
+        XY1 = (middle_pixel[0] + solution_1[1], middle_pixel[1] + solution_1[2])
+        XY2 = (middle_pixel[0] + solution_2[1], middle_pixel[1] + solution_2[2])
+
+        return (XY1, XY2)

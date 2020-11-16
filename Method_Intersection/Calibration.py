@@ -3,6 +3,8 @@ import math
 import numpy as np
 import pickle
 
+from numpy.core.fromnumeric import size
+
 
 def calculate(camera_1, camera_2):
     """Calibrate the cameras
@@ -23,7 +25,7 @@ def calculate(camera_1, camera_2):
     if not ret_cal_1:
         print("failed to grab frame_1")
     frame_shape = frame_cal_1.shape
-    image_size = (frame_shape[1]//scale_down, frame_shape[0]//scale_down)
+    image_size = (frame_shape[1] // scale_down, frame_shape[0] // scale_down)
 
     print(
         "____________________________________________________________________________________________CAMERA_POSITIONS______________"
@@ -111,10 +113,13 @@ def calculate(camera_1, camera_2):
     )
     dir_1 = np.array([x_point_1, distance_center_point_camera_1, -height])
     dir_2 = np.array([x_point_2 - width, distance_center_point_camera_2, -height])
-    coord_1 = np.array([0, 0, height])
-    coord_2 = np.array([width, 0, height])
+    rg1_norm = np.linalg.norm(dir_1)
+    rg2_norm = np.linalg.norm(dir_2)
+    dir_1= dir_1 / rg1_norm
+    dir_2= dir_2/ rg2_norm
+    coord_1 = np.array([0, 0, height])/100
+    coord_2 = np.array([width, 0, height])/100
     cv2.destroyAllWindows()
-
 
     print("Calculating directional unit vectors")
     #   directions of the axis of the image on this plane:
@@ -126,32 +131,60 @@ def calculate(camera_1, camera_2):
     if x1[0] < 0:
         x1 = -x1
 
-
     fov_horizontal_rad = (fov_horizontal / 180) * math.pi
-    #   get a diagonal field of view (for ease further)
-    convert_to_diag = math.sqrt(image_size[0] ** 2 + image_size[1] ** 2) / image_size[0]
-
-    fov = fov_horizontal_rad * convert_to_diag
 
     #   calculation of the size of a pixel:
-    size_pixel = (np.tan(fov / 2)) / (math.sqrt((image_size[0]) ** 2 + (image_size[1]) ** 2))
-    
+    d=0.5
+    size_pixel = (2*d*math.tan(fov_horizontal_rad/2))/(image_size[0])
+
     # TODO : VERDER FIXEN VANAF HIER
 
     #   normalize x1 to be the same size as a pixel
     x1_norm = np.linalg.norm(x1)
     x1 = x1 / x1_norm  #   x is 1m long
     x1 = x1 * size_pixel  #    x is 1 pixel long
+    
+    #   y1 is lateral to self.calibration_values["dir_1"] and in a vertical plane
+    #       this vertical plane has self.calibration_values["dir_1"] and the vertical vector in it:
+    vertical_rg = np.cross(dir_1, np.array([0, 0, 1]))
+    y1 = np.cross(vertical_rg, dir_1)
+    #   we say y1's direction to have a negative y-value
+    if y1[1] > 0:
+        y1 = -y1
+    #   normalize y1 as the size of one pixel
+    y1_norm = np.linalg.norm(y1)
+    y1 = y1 / y1_norm  #   is nu 1m lang
+    y1 = y1 * size_pixel  #    is nu 1 pixel lang
 
+    x2 = np.cross(np.array([0, 0, 1]), dir_2)
+    #   x2's x-coordinate is positive:
+    if x2[0] < 0:
+        x2 = -x2
+    x2_norm = np.linalg.norm(x2)
+    x2 = x2 / x2_norm  #   now it is 1m long
+    #   now let's find y2
+    #       the plane made by C2M2 and (0,0,1) intersects bv2 allong y2
+    verticaal_rg_2 = np.cross(dir_2, np.array([0, 0, 1]))
+    y2 = np.cross(verticaal_rg_2, dir_2)
+    if y2[2] > 0:
+        y2 = -y2
+    y2_norm = np.linalg.norm(y2)
+    y2 = y2 / y2_norm  #   now it is 1m long
+    x2 = x2 * size_pixel
+    y2 = y2 * size_pixel
 
     calculated_dict = {
-        "fov_h": fov_horizontal,
         "dir_1": dir_1,
         "dir_2": dir_2,
         "coord_1": coord_1,
         "coord_2": coord_2,
         "image_size": image_size,
+        "x1": x1,
+        "y1": y1,
+        "x2": x2,
+        "y2": y2,
     }
+
     return calculated_dict
 
 
