@@ -4,7 +4,6 @@ The code is based on Rahmad Sadli's Kalman filter implementation for 2D movement
 https://github.com/RahmadSadli/2-D-Kalman-Filter/blob/master/KalmanFilter.py
 """
 
-from time import thread_time
 import numpy as np
 
 

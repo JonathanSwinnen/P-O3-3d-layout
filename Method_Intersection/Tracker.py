@@ -141,14 +141,17 @@ class Tracker():
         # create cost matrix
 
         #TODO: ONDERDSTE WEGGECOMMENTE IS DE JUITSE ALS ADDPERSON WERKT!!!
-        # cost_matrix = np.zeros((len(dets), len(self.persons)))
-        cost_matrix = np.zeros((len(dets), len(dets)))
+        cost_matrix_dim = max(len(self.persons), len(dets))
+        cost_matrix = np.zeros((cost_matrix_dim, cost_matrix_dim))
+        # cost_matrix = np.zeros((len(dets), len(dets)))
         # loop over all people
         for person in self.persons:
             j = 0
             # loop over all detections
             for det_pos in dets:
                 # add cost matrix entry: distance between person prediction point and detection point
+                print(i,j)
+                print(cost_matrix)
                 cost_matrix[i][j] = np.linalg.norm( np.array(person.pos) - np.array(det_pos) )
                 j += 1
             i += 1

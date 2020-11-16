@@ -21,15 +21,18 @@ class Detector:
 
         #   points (x,y)
         coordinates = []
+        # bounding boxes
+        boxes = []
         # if not len(faces) == 0:
         for (x, y, w, h) in locations:
             coordinates += [(x + w // 2, y + h // 2)]
+            boxes += [(x, y, x+w, y+h)]
 
-        return coordinates
+        return coordinates, boxes
 
     def detect_both_frames(self, left_frame, right_frame):
-        coordinates_left = self.detect_frame(left_frame)
-        coordinates_right = self.detect_frame(right_frame)
+        coordinates_left, boxes_left = self.detect_frame(left_frame)
+        coordinates_right, boxes_right = self.detect_frame(right_frame)
 
         # TODO: better filter
         if not coordinates_left:
@@ -37,4 +40,4 @@ class Detector:
         if not coordinates_right:
             coordinates_left = []
 
-        return coordinates_left, coordinates_right
+        return coordinates_left, coordinates_right, boxes_left, boxes_right
