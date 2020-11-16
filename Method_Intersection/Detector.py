@@ -17,7 +17,9 @@ class Detector:
             the point on the image
         """
 
-        locations, _ = self.hog.detectMultiScale(image, winStride=(8,8), padding=(16,16), scale=1.07)
+        locations, _ = self.hog.detectMultiScale(
+            image, winStride=(8, 8), padding=(16, 16), scale=1.07
+        )
 
         #   points (x,y)
         coordinates = []

@@ -93,7 +93,7 @@ u = 0 * np.ones((3, 1))
 stac = 100
 a = 3
 b = 80
-stdm = np.array([[a],[a],[b]])
+stdm = np.array([[a], [a], [b]])
 
 tracker = Tracker(u, stac, stdm, 0.1)
 
@@ -150,15 +150,14 @@ while True:
             dets = positioner.get_XYZ(coordinates_1, coordinates_2)
             # update filter
             tracked_points = tracker.update(dets)
-            
-            pers_count = 0
+
             for pers in tracked_points:
                 if dets != []:
-                    print("dets:", dets)
-                    print("tracked points[pers]:",tracked_points[pers])
-                    print("perscount:",pers_count,"change due to kalman filter:\n", dets[0]-tracked_points[pers].T,
-                        "\n___________________________________________________________")
-                    pers_count+=1
+                    print(
+                        "change due to kalman filter:\n",
+                        dets[0] - tracked_points[pers].T,
+                        "\n___________________________________________________________",
+                    )
                 point_on_img = positioner.reprojectPoint(tracked_points[pers])
                 # print on image 1(point_on_img)
                 a, b, c, d = int(point_on_img[0][0]), int(point_on_img[0][1]), 10, 10
