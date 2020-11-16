@@ -17,7 +17,9 @@ class Detector:
             the point on the image
         """
 
-        locations, _ = self.hog.detectMultiScale(image, winStride=(8,8), padding=(7,7), scale=1.1)
+        locations, _ = self.hog.detectMultiScale(
+            image, winStride=(8, 8), padding=(16, 16), scale=1.07
+        )
 
         #   points (x,y)
         coordinates = []
@@ -25,8 +27,10 @@ class Detector:
         boxes = []
         # if not len(faces) == 0:
         for (x, y, w, h) in locations:
-            coordinates += [(x + w // 2, y + h // 2)]
+            # bounding box coordinates
             boxes += [(x, y, x+w, y+h)]
+            # center of x, 1/4 of y:
+            coordinates += [(x + w // 2, y + h // 4)]
 
         return coordinates, boxes
 

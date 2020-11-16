@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from math import floor
 
 dirname = os.path.dirname(__file__)
+
 vid_path_1 = os.path.join(dirname, "data/videos/output_two_person_0.avi")
 vid_path_2 = os.path.join(dirname, "data/videos/output_two_person_1.avi")
 #vid_path_1 = os.path.join(dirname, "data/videos/output_one_person_0.avi")
@@ -149,18 +150,14 @@ while True:
             dets = positioner.get_XYZ(coordinates_1, coordinates_2)
             # update filter
             tracked_points = tracker.update(dets)
-            
 
-            # "GUI"
-            pers_count = 0
             for pers in tracked_points:
                 if dets != []:
-                    print("dets:", dets)
-                    print("tracked points[pers]:",tracked_points[pers])
-                    print("perscount:",pers_count,"change due to kalman filter:\n", dets[0]-tracked_points[pers].T,
-                        "\n___________________________________________________________")
-                    pers_count+=1
-                print("\nHOLA\n\n", tracked_points[pers], "\n\n")
+                    print(
+                        "change due to kalman filter:\n",
+                        dets[0] - tracked_points[pers].T,
+                        "\n___________________________________________________________",
+                    )
                 point_on_img = positioner.reprojectPoint(tracked_points[pers])
                 # print on image 1(point_on_img)
                 a, b, c, d = int(point_on_img[0][0]), int(point_on_img[0][1]), 20, 20
