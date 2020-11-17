@@ -1,0 +1,17 @@
+50,Daan,Enter,R
+1980,Daan,Exit,L
+2020,Daan,Enter,L
+2300,Daan,Exit,R
+2330,Daan,Enter,R
+2400,Daan,Exit,L
+2420,Daan,Enter,L
+2480,Daan,Exit,R
+2510,Daan,Enter,R
+2720,Daan,Exit,L
+2760,Daan,Enter,L
+3100,Daan,Exit,R
+3120,Daan,Enter,R
+3335,Daan,Exit,L
+3350,Daan,Enter,L
+3480,Daan,Exit,R
+3520,Daan,Enter,R
