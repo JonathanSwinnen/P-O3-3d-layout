@@ -195,10 +195,7 @@ def save_calibration(filename, calculated):
 
 
 def load_calibration(filename):
-    print("1")
     file = open(filename, "rb")
-    print("2")
     calculated = pickle.load(file)
-    print("3")
     file.close()
     return calculated

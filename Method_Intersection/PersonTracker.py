@@ -8,7 +8,7 @@ This file contains a class containing the logic for a person tracker using a Kal
 from KalmanFilter import KalmanFilter
 import numpy as np
 
-class Kalman_person_tracker:
+class KalmanPersonTracker:
 
     def __init__(self, id, x0, u, std_acc, std_meas, dt):
         """Creates a new Kalman person tracker

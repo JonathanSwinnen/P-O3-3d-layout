@@ -46,7 +46,7 @@ class Tracker():
         x0 : np.array
             initial state vector
         """
-        self.persons.append(PersonTracker.Kalman_person_tracker(id, x0, self.u, self.std_acc, self.std_meas, self.dt))
+        self.persons.append(PersonTracker.KalmanPersonTracker(id, x0, self.u, self.std_acc, self.std_meas, self.dt))
         
 
     def rm_person(self, id):
@@ -57,7 +57,7 @@ class Tracker():
         id : string
             person identifier to remove
         """
-        self.persons = list(self.persons.filter(lambda p: p.id != id, self.persons))
+        self.persons = list(filter(lambda p: p.id != id, self.persons))
 
 
     def predict(self, dt=None):
@@ -140,18 +140,14 @@ class Tracker():
 
         # create cost matrix
 
-        #TODO: ONDERDSTE WEGGECOMMENTE IS DE JUITSE ALS ADDPERSON WERKT!!!
         cost_matrix_dim = max(len(self.persons), len(dets))
         cost_matrix = np.zeros((cost_matrix_dim, cost_matrix_dim))
-        # cost_matrix = np.zeros((len(dets), len(dets)))
         # loop over all people
         for person in self.persons:
             j = 0
             # loop over all detections
             for det_pos in dets:
                 # add cost matrix entry: distance between person prediction point and detection point
-                print(i,j)
-                print(cost_matrix)
                 cost_matrix[i][j] = np.linalg.norm( np.array(person.pos) - np.array(det_pos) )
                 j += 1
             i += 1

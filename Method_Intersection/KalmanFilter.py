@@ -93,22 +93,6 @@ class KalmanFilter(object):
             new sampling rate
         """
 
-        # self.second_to_last = self.last
-        # self.last = self.x
-        # self.v_second_to_last_est = self.v_last_est
-        # self.v_last_est = self.x[3:6]
-        # print("v last lest", self.v_last_est)
-        # print("v 2 last lest", self.v_second_to_last_est)
-        # self.a_est = np.array(
-        #     [
-        #         [(self.v_last_est[0][0] - self.v_second_to_last_est[0][0]) / dt],
-        #         [(self.v_last_est[1][0] - self.v_second_to_last_est[1][0]) / dt],
-        #         [(self.v_last_est[2][0] - self.v_second_to_last_est[2][0]) / dt],
-        #     ]
-        # )
-
-        # print("a est",self.a_est)
-        # self.u = self.a_est
         # Define sampling time
         self.dt = dt
 

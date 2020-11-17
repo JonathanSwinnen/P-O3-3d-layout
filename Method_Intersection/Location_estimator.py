@@ -1,9 +1,32 @@
 import numpy as np
 import math
+import munkres
 
 class Positioner():
     def __init__(self,calibration_values):
         self.calibration_values = calibration_values
+
+    def pairLeftRightPoints(self, left_dets, right_dets):
+        
+
+
+
+
+
+        """ 
+        
+        elk punt in left_dets:
+            projecteer lijn
+
+            voor elk punt in right dets:
+                afstand berekenen tot geprojecteerde lijn
+                als afstand kleinste is of binnen uncertainty range:
+                    
+        
+
+
+
+        """
 
     def get_XYZ(
         self,
@@ -32,19 +55,6 @@ class Positioner():
 
         XYZ_POINTS = []
 
-        #   get a normalized vector of both the directions of the cameras
-        rg1_norm = np.linalg.norm(self.calibration_values["dir_1"])
-        rg2_norm = np.linalg.norm(self.calibration_values["dir_2"])
-        self.calibration_values["dir_1"] = self.calibration_values["dir_1"] / rg1_norm
-        self.calibration_values["dir_2"] = self.calibration_values["dir_2"] / rg2_norm
-        #   get the field of view in Radians
-        fov_horizontal_rad = (self.calibration_values["fov_h"] / 180) * math.pi
-        #   get a diagonal field of view (for ease further)
-        convert_to_diag = (math.sqrt(self.calibration_values["image_size"][0] ** 2 + self.calibration_values["image_size"][1] ** 2)) / (
-            self.calibration_values["image_size"][0]
-        )
-        fov = fov_horizontal_rad * convert_to_diag
-
         #TODO: optimise: delete already calculated points
         
         for afb_pos_1 in points_camera_1:
@@ -59,41 +69,8 @@ class Positioner():
             #   center point of plane:
             M1 = d * self.calibration_values["dir_1"] + self.calibration_values["coord_1"]
 
-            #   directions of the axis of the image on this plane:
-            #   we want to create "normalized" vectors that follow both the axis of the image on this projection plane
-            #           "normalized": their length is the projected length of 1 pixel on this plane
-
-            #   x1 is horizontal, lateral to self.calibration_values["dir_1"]
-            horizontal_rg = np.array([0, 0, 1])
-            x1 = np.cross(horizontal_rg, self.calibration_values["dir_1"])
-
-            #   we say x1's direction to have a positive x-value
-            if x1[0] < 0:
-                x1 = -x1
-
-            #   calculation of the size of a pixel:
-            size_pixel = (2 * d * np.tan(fov / 2)) / (
-                math.sqrt((self.calibration_values["image_size"][0]) ** 2 + (self.calibration_values["image_size"][1]) ** 2)
-            )
-
-            #   normalize x1 to be the same size as a pixel
-            x1_norm = np.linalg.norm(x1)
-            x1 = x1 / x1_norm  #   x is 1m long
-            x1 = x1 * size_pixel  #    x is 1 pixel long
-
-            #   y1 is lateral to self.calibration_values["dir_1"] and in a vertical plane
-            #       this vertical plane has self.calibration_values["dir_1"] and the vertical vector in it:
-            vertical_rg = np.cross(self.calibration_values["dir_1"], np.array([0, 0, 1]))
-            y1 = np.cross(vertical_rg, self.calibration_values["dir_1"])
-
-            #   we say y1's direction to have a negative y-value
-            if y1[1] > 0:
-                y1 = -y1
-
-            #   normalize y1 as the size of one pixel
-            y1_norm = np.linalg.norm(y1)
-            y1 = y1 / y1_norm  #   is nu 1m lang
-            y1 = y1 * size_pixel  #    is nu 1 pixel lang
+            x1 = self.calibration_values["x1"]
+            y1 = self.calibration_values["y1"]
 
             #   now we can determine the location of the recognized point in space (P1)
             #       first, determine the middle of the image:
@@ -117,24 +94,8 @@ class Positioner():
             #   for this step, we need two linear independant vectors of bv2
             #           we'll need these later, so let's calculate x2,y2
             #           x2 is allong the intersection of horizontal plane and image plane 2
-
-            x2 = np.cross(horizontal_rg, self.calibration_values["dir_2"])
-
-            #   x2's x-coordinate is positive:
-            if x2[0] < 0:
-                x2 = -x2
-            x2_norm = np.linalg.norm(x2)
-            x2 = x2 / x2_norm  #   now it is 1m long
-
-            #   now let's find y2
-            #       the plane made by C2M2 and (0,0,1) intersects bv2 allong y2
-            C2M2 = M2 - self.calibration_values["coord_2"]
-            verticaal_rg_2 = np.cross(C2M2, np.array([0, 0, 1]))
-            y2 = np.cross(verticaal_rg_2, self.calibration_values["dir_2"])
-            if y2[2] > 0:
-                y2 = -y2
-            y2_norm = np.linalg.norm(y2)
-            y2 = y2 / y2_norm  #   now it is 1m long
+            x2 = self.calibration_values["x2"]
+            y2 = self.calibration_values["y2"]
 
             #   To find the intersections, two linear systems need to be computed (see calculations on paper (later in pdf))
             #   this linear system determines the intersection of line C1C2 and image plane 2
@@ -189,8 +150,6 @@ class Positioner():
 
             #   P2 is the point of the person in camera2's image
             #   normalize x2 and y2 as the size of one pixel
-            x2 = x2 * size_pixel
-            y2 = y2 * size_pixel
 
             #   for every detected point on image_2: find the distance, and determine which is most likely to be the right one
             distance = None
