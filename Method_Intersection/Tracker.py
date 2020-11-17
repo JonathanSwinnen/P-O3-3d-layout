@@ -57,7 +57,7 @@ class Tracker():
         id : string
             person identifier to remove
         """
-        self.persons = list(filter(lambda p: p.id != id, self.persons))
+        self.persons = list(self.persons.filter(lambda p: p.id != id, self.persons))
 
 
     def predict(self, dt=None):

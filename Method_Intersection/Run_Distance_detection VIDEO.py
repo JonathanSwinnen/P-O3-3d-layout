@@ -129,8 +129,6 @@ while True:
     if success:
         n += 1
         event = timestamps.get(n, None)
-
-        print(event)
         if event is not None:
             if event[1] == "Exit":
                 tracker.rm_person(event[0])

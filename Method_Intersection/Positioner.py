@@ -52,8 +52,6 @@ class Positioner:
                 + self.calibration_values["coord_1"]
             )
 
-
-
             # TODO: HIER IS DIE x stuff weggeknipt
 
             #   now we can determine the location of the recognized point in space (P1)
