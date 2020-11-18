@@ -1,52 +1,67 @@
 import os
-import numpy as np
 import torch
 from PIL import Image
 
 from itertools import chain
 import pickle
 
-class PO3Dataset(object):
-    def __init__(self, paths, transforms):
-        self.paths = paths
-        #print(paths)
 
+class PO3Dataset(object):
+    """
+    Custom dataset class for a head detector.
+    """
+    def __init__(self, paths, transforms, SUB_MAPS=False, ann_path="./adjusted_data/clean_ann_scaled.pkl"):
+        # paths where images are located
+        self.paths = paths
+
+        # are images located in submap: "path/img/img_xx.png" (True)
+        # or not: "path/img_xx.png" (False)
+        self.sub_maps = SUB_MAPS
+
+        # transformer
         self.transforms = transforms
-        f = open('clean_annotations.pkl', 'rb')
+
+        # load annotations from given file_path
+        f = open(ann_path, 'rb')
         self.ann = pickle.load(f)
-        # print(self.ann)
+        print(self.ann)
         f.close()
-        # load all image files, sorting them to
+
+        # load all image files from given paths, sorting them to
         # ensure that they are aligned
         self.imgs = []
-        total = 0
-        for root, dirs, files in chain.from_iterable(os.walk(os.path.join(path, "img/")) for path in paths):
+
+        if self.sub_maps:
+            submap = "img/"
+            
+        for root, dirs, files in (chain.from_iterable(os.walk(os.path.join(path, "img/"))) if self.sub_maps else chain.from_iterable(os.walk(path))) for path in paths:
             for file in files:
-                file_name = os.path.join(root, file)
-                total += 1
-                if len(self.ann[file_name]) > 0:
-                    self.imgs += [file_name]
+                # add image
+                self.imgs += [os.path.join(root, file)]
         self.imgs = sorted(self.imgs)
-        print("total images:", total)
-        print("filtered images:", total - len(self.imgs))
-        print("usable images:", len(self.imgs))
+
+        print("Total images in dataset:", len(self.imgs))
 
     def __getitem__(self, idx):
         # load images ad masks
+        image_id = torch.tensor([idx])
         img_path = self.imgs[idx]
         img = Image.open(img_path).convert("RGB")
 
         # get bounding box coordinates for each mask
-        boxes = self.ann[img_path]
+        boxes = self.ann[img_path][0]
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
-        # there is only one class
-        labels = torch.ones((len(boxes),), dtype=torch.int64)
+
+        # define classes
+        if self.ann[img_path][1][0] == 0:  # background
+            labels = torch.zeros((len(boxes),), dtype=torch.int64)
+        else:  # heads
+            labels = torch.ones((len(boxes),), dtype=torch.int64)
+
         print("labels:", labels)
-        # masks = torch.as_tensor(masks, dtype=torch.uint8)
-        image_id = torch.tensor([idx])
 
+        # calc area
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
-
 
         # suppose all instances are not crowd
         iscrowd = torch.zeros((len(boxes),), dtype=torch.int64)
