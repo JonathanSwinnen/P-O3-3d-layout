@@ -1,0 +1,34 @@
+{
+    "description": "",
+    "tags": [],
+    "size": {
+        "height": 1080,
+        "width": 1920
+    },
+    "objects": [
+        {
+            "id": 553811720,
+            "classId": 2703929,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "daan012",
+            "createdAt": "2020-11-10T15:01:29.880Z",
+            "updatedAt": "2020-11-10T15:01:29.880Z",
+            "tags": [],
+            "classTitle": "Head",
+            "points": {
+                "exterior": [
+                    [
+                        849,
+                        100
+                    ],
+                    [
+                        920,
+                        175
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

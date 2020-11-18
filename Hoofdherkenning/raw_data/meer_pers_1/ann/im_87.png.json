@@ -1,0 +1,106 @@
+{
+    "description": "",
+    "tags": [],
+    "size": {
+        "height": 1080,
+        "width": 1920
+    },
+    "objects": [
+        {
+            "id": 553814171,
+            "classId": 2703929,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "mathiaspr",
+            "createdAt": "2020-11-10T15:32:09.694Z",
+            "updatedAt": "2020-11-10T15:32:27.502Z",
+            "tags": [],
+            "classTitle": "Head",
+            "points": {
+                "exterior": [
+                    [
+                        484,
+                        81
+                    ],
+                    [
+                        536,
+                        152
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 553814178,
+            "classId": 2703929,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "mathiaspr",
+            "createdAt": "2020-11-10T15:32:15.901Z",
+            "updatedAt": "2020-11-10T15:32:27.502Z",
+            "tags": [],
+            "classTitle": "Head",
+            "points": {
+                "exterior": [
+                    [
+                        774,
+                        223
+                    ],
+                    [
+                        837,
+                        301
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 553814182,
+            "classId": 2703929,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "mathiaspr",
+            "createdAt": "2020-11-10T15:32:21.261Z",
+            "updatedAt": "2020-11-10T15:32:27.502Z",
+            "tags": [],
+            "classTitle": "Head",
+            "points": {
+                "exterior": [
+                    [
+                        1391,
+                        66
+                    ],
+                    [
+                        1431,
+                        138
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 553814189,
+            "classId": 2703929,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "mathiaspr",
+            "createdAt": "2020-11-10T15:32:27.434Z",
+            "updatedAt": "2020-11-10T15:32:27.434Z",
+            "tags": [],
+            "classTitle": "Head",
+            "points": {
+                "exterior": [
+                    [
+                        1663,
+                        150
+                    ],
+                    [
+                        1717,
+                        221
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

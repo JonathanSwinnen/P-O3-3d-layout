@@ -1,0 +1,130 @@
+{
+    "description": "",
+    "tags": [],
+    "size": {
+        "height": 1080,
+        "width": 1920
+    },
+    "objects": [
+        {
+            "id": 553810349,
+            "classId": 2703929,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "mathiaspr",
+            "createdAt": "2020-11-10T14:47:57.358Z",
+            "updatedAt": "2020-11-17T21:03:01.151Z",
+            "tags": [],
+            "classTitle": "Head",
+            "points": {
+                "exterior": [
+                    [
+                        272,
+                        57
+                    ],
+                    [
+                        342,
+                        152
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 553810356,
+            "classId": 2703929,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "mathiaspr",
+            "createdAt": "2020-11-10T14:48:03.252Z",
+            "updatedAt": "2020-11-17T21:03:15.543Z",
+            "tags": [],
+            "classTitle": "Head",
+            "points": {
+                "exterior": [
+                    [
+                        631,
+                        37
+                    ],
+                    [
+                        677,
+                        108
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 553810364,
+            "classId": 2703929,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "mathiaspr",
+            "createdAt": "2020-11-10T14:48:12.055Z",
+            "updatedAt": "2020-11-17T21:03:24.352Z",
+            "tags": [],
+            "classTitle": "Head",
+            "points": {
+                "exterior": [
+                    [
+                        610,
+                        108
+                    ],
+                    [
+                        668,
+                        203
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 553810372,
+            "classId": 2703929,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "mathiaspr",
+            "createdAt": "2020-11-10T14:48:17.552Z",
+            "updatedAt": "2020-11-10T14:48:24.072Z",
+            "tags": [],
+            "classTitle": "Head",
+            "points": {
+                "exterior": [
+                    [
+                        1052,
+                        131
+                    ],
+                    [
+                        1138,
+                        213
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 553810404,
+            "classId": 2703929,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "mathiaspr",
+            "createdAt": "2020-11-10T14:48:24.000Z",
+            "updatedAt": "2020-11-17T21:02:51.214Z",
+            "tags": [],
+            "classTitle": "Head",
+            "points": {
+                "exterior": [
+                    [
+                        1348,
+                        120
+                    ],
+                    [
+                        1397,
+                        186
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

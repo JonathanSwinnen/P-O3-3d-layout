@@ -1,0 +1,34 @@
+{
+    "description": "",
+    "tags": [],
+    "size": {
+        "height": 1080,
+        "width": 1920
+    },
+    "objects": [
+        {
+            "id": 557076636,
+            "classId": 2707862,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "daan012",
+            "createdAt": "2020-11-17T20:26:38.357Z",
+            "updatedAt": "2020-11-17T20:26:38.357Z",
+            "tags": [],
+            "classTitle": "Background",
+            "points": {
+                "exterior": [
+                    [
+                        0,
+                        0
+                    ],
+                    [
+                        1919,
+                        1079
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

@@ -1,0 +1,82 @@
+{
+    "description": "",
+    "tags": [],
+    "size": {
+        "height": 1080,
+        "width": 1920
+    },
+    "objects": [
+        {
+            "id": 553812950,
+            "classId": 2703929,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "daan012",
+            "createdAt": "2020-11-10T15:22:01.553Z",
+            "updatedAt": "2020-11-10T15:22:12.624Z",
+            "tags": [],
+            "classTitle": "Head",
+            "points": {
+                "exterior": [
+                    [
+                        1199,
+                        60
+                    ],
+                    [
+                        1256,
+                        131
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 553812978,
+            "classId": 2703929,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "daan012",
+            "createdAt": "2020-11-10T15:22:06.329Z",
+            "updatedAt": "2020-11-10T15:22:12.624Z",
+            "tags": [],
+            "classTitle": "Head",
+            "points": {
+                "exterior": [
+                    [
+                        31,
+                        96
+                    ],
+                    [
+                        73,
+                        156
+                    ]
+                ],
+                "interior": []
+            }
+        },
+        {
+            "id": 553812984,
+            "classId": 2703929,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "daan012",
+            "createdAt": "2020-11-10T15:22:12.504Z",
+            "updatedAt": "2020-11-10T15:22:12.504Z",
+            "tags": [],
+            "classTitle": "Head",
+            "points": {
+                "exterior": [
+                    [
+                        1658,
+                        134
+                    ],
+                    [
+                        1716,
+                        203
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

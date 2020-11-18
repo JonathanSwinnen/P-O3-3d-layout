@@ -1,0 +1,34 @@
+{
+    "description": "",
+    "tags": [],
+    "size": {
+        "height": 1080,
+        "width": 1920
+    },
+    "objects": [
+        {
+            "id": 553809831,
+            "classId": 2703929,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "mathiaspr",
+            "createdAt": "2020-11-10T14:41:29.203Z",
+            "updatedAt": "2020-11-10T14:41:29.203Z",
+            "tags": [],
+            "classTitle": "Head",
+            "points": {
+                "exterior": [
+                    [
+                        1605,
+                        156
+                    ],
+                    [
+                        1674,
+                        209
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}

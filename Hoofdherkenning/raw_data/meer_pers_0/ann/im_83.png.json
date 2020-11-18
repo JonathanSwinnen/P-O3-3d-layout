@@ -1,0 +1,34 @@
+{
+    "description": "",
+    "tags": [],
+    "size": {
+        "height": 1080,
+        "width": 1920
+    },
+    "objects": [
+        {
+            "id": 553819817,
+            "classId": 2703929,
+            "description": "",
+            "geometryType": "rectangle",
+            "labelerLogin": "mathias.smeets222@gmail.com",
+            "createdAt": "2020-11-10T15:36:05.361Z",
+            "updatedAt": "2020-11-10T15:36:05.361Z",
+            "tags": [],
+            "classTitle": "Head",
+            "points": {
+                "exterior": [
+                    [
+                        1078,
+                        209
+                    ],
+                    [
+                        1143,
+                        289
+                    ]
+                ],
+                "interior": []
+            }
+        }
+    ]
+}
