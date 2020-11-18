@@ -41,6 +41,7 @@ class PO3Dataset(object):
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
         # there is only one class
         labels = torch.ones((len(boxes),), dtype=torch.int64)
+        print("labels:", labels)
         # masks = torch.as_tensor(masks, dtype=torch.uint8)
         image_id = torch.tensor([idx])
 

@@ -29,7 +29,7 @@ def get_transform(train):
 
 def main():
     # paths = ('./data/apart_0/', './data/meer_pers_0/', './data/zittend_0/', './data/apart_1/', './data/meer_pers_1/', './data/zittend_1/', './data/zz_testing/')
-    paths = ('./data/zittend_1/', './data/zz_testing/')
+    # paths = ('./data/zittend_1/', './data/zz_testing/')
 
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
