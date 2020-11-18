@@ -5,7 +5,7 @@ from math import floor
 import time
 
 
-def compres_images(paths, SCALE_DOWN_FACTOR = 1):
+def compress_images(paths, SCALE_DOWN_FACTOR = 1):
     """
     Compressing the raw images with dimension of 1980x1080 to a more processable size.
     The adjusted images are stored in: './adjusted_data/'a_map'/img_xx.png'
@@ -39,4 +39,4 @@ def compres_images(paths, SCALE_DOWN_FACTOR = 1):
 if __name__ == "__main__":
     paths = ('./raw_data/apart_0/', './raw_data/meer_pers_0/', './raw_data/zittend_0/', './raw_data/apart_1/',
              './raw_data/meer_pers_1/', './raw_data/zittend_1/', './raw_data/videodata_0/', './raw_data/videodata_1/')
-    compres_images(paths, SCALE_DOWN_FACTOR=4)
+    compress_images(paths, SCALE_DOWN_FACTOR=4)
