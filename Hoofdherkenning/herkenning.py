@@ -28,8 +28,8 @@ def get_transform(train):
 
 
 def main():
-    paths = ('./data/apart_0/', './data/meer_pers_0/', './data/zittend_0/', './data/apart_1/', './data/meer_pers_1/', './data/zittend_1/', './data/zz_testing/')
-    # paths = ('./data/zittend_1/', './data/zz_testing/')
+    # paths = ('./data/apart_0/', './data/meer_pers_0/', './data/zittend_0/', './data/apart_1/', './data/meer_pers_1/', './data/zittend_1/', './data/zz_testing/')
+    paths = ('./data/zittend_1/', './data/zz_testing/')
 
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -45,7 +45,8 @@ def main():
 
     # split the dataset in train and test set
     indices = torch.randperm(len(dataset)).tolist()
-    dataset = torch.utils.data.Subset(dataset, indices[:-50]) # TODO: 50 laatste afbeeldingen als test? veel!
+    print(indices)
+    dataset = torch.utils.data.Subset(dataset, indices[:-50])
     dataset_test = torch.utils.data.Subset(dataset_test, indices[-50:])
 
     # define training and validation data loaders
@@ -66,18 +67,19 @@ def main():
     params = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.SGD(params, lr=0.005, momentum=0.9, weight_decay=0.0005)
     # and a learning rate scheduler
-    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3,gamma=0.1)
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
     # let's train it for 36 epochs
     num_epochs = 1
 
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
         t1 = train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=20)
-        print(t1.loss)
+        print("Daan", str(t1.loss)[:7])
         # update the learning rate
         lr_scheduler.step()
         # evaluate on the test dataset
-        evaluate(model, data_loader_test, device=device)
+        data = evaluate(model, data_loader_test, device=device)
+        print("Daan", data.summarize)
 
     print("That's it!")
     torch.save(model, "training_PO3_v2.pth")

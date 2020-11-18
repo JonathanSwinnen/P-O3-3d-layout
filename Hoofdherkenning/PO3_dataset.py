@@ -24,8 +24,8 @@ class PO3Dataset(object):
             for file in files:
                 file_name = os.path.join(root, file)
                 total += 1
-                # if len(self.ann[file_name]) > 0:
-                self.imgs += [file_name]
+                if len(self.ann[file_name]) > 0:
+                    self.imgs += [file_name]
         self.imgs = sorted(self.imgs)
         print("total images:", total)
         print("filtered images:", total - len(self.imgs))
@@ -53,7 +53,6 @@ class PO3Dataset(object):
         target = {}
         target["boxes"] = boxes
         target["labels"] = labels
-        # target["masks"] = masks # TODO no masks!
         target["image_id"] = image_id
         target["area"] = area
         target["iscrowd"] = iscrowd
