@@ -159,7 +159,7 @@ class Positioner2:
                 best_dets = dets
 
         # return dets from best pairing sequence
-        return best_dets
+        return min_cost, best_dets
 
 
     def get_mean_dets_vs_prediction_cost(self, dets, predictions):
