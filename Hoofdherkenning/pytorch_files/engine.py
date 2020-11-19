@@ -83,12 +83,13 @@ def evaluate(model, data_loader, device):
 
     for images, targets in metric_logger.log_every(data_loader, 100, header):
         images = list(img.to(device) for img in images)
-        print(images)
+
         torch.cuda.synchronize()
         model_time = time.time()
         outputs = model(images)
-
+        print("t1", outputs)
         outputs = [{k: v.to(cpu_device) for k, v in t.items()} for t in outputs]
+        print("t2", outputs)
         model_time = time.time() - model_time
 
         res = {target["image_id"].item(): output for target, output in zip(targets, outputs)}
