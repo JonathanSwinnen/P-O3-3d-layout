@@ -107,7 +107,7 @@ tracker = Tracker(u, stac, stdm, 0.1)
 start_R = [[5], [5], [1], [0], [0], [0]]
 start_L = [[0], [5], [1], [0], [0], [0]]
 
-positioner = Positioner2(calibrated_values, 0)
+positioner = Positioner2(calibrated_values, 0.0027)
 
 timestamps = extract_timestamps()
 
@@ -122,7 +122,7 @@ dt_last = None
 n = 0
 
 while True:
-    cv2.waitKey()
+    # cv2.waitKey()
 
     #   This loop embodies the main workings of this method
     frame_1, frame_2, success = get_frames(camera_1, camera_2, image_size)
@@ -165,6 +165,7 @@ while True:
             #   space pressed:
             #       pause right now, changes being made to code
             print("paused, press space to continue")
+            print("debug time!")
             while True:
                 key = cv2.waitKey(1)
                 if key % 256 == 32:
