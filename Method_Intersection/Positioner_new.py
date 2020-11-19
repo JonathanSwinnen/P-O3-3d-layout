@@ -53,7 +53,7 @@ class Positioner2:
         return P
 
     def intersection_line_with_imageplane(
-        self, line_direction, line_point, image_plane
+        self, line_point_1, line_point_2, image_plane
     ):
         """
         Calculates the intersection of a line with an imageplane
@@ -64,7 +64,7 @@ class Positioner2:
         Returns:
             - the XYZ coordinates of the intersectionpoint
         """
-
+        line_direction = line_point_2 - line_point_1
         A = np.array(
             [
                 [
@@ -84,17 +84,17 @@ class Positioner2:
                 ],
             ]
         )
-        b = self.M[image_plane - 1] - line_point
+        b = self.M[image_plane - 1] - line_point_1
         solution = np.linalg.solve(A, b)
-
-        return solution[0] * line_direction + line_point
+        point = solution[0] * line_direction + line_point_1
+        return point
 
     def distance_point_line(self, point_of_line_1, point_of_line_2, point):
         """
         simple formula to determine the distance between a point and a line through two other points
         """
         distance = np.linalg.norm(
-            np.cross(point - point_of_line_1, point - point_of_line_2)
+            np.cross(point_of_line_1 - point, point_of_line_2 - point_of_line_1)
         ) / np.linalg.norm(point_of_line_2 - point_of_line_1)
 
         return distance
@@ -158,7 +158,7 @@ class Positioner2:
         Args:
             - point_1: detected point on camera 1 image
             - point_2: detected point on camera 2 image
-            - target_camera: what camera's image to project to (either 1 or 2)
+            - target_camera: what camera's image to project to (either 0 (means camera 1) or 1)
         Returns:
             distance
         """
@@ -173,18 +173,16 @@ class Positioner2:
         ]
 
         #   calculate two intersections with the target imageplane
-        IP1 = self.intersection_line_with_imageplane(
-            points[-target_camera] - cameras[target_camera - 1],
-            points[target_camera - 1],
-            target_camera,
-        )
-        IP2 = self.intersection_line_with_imageplane(
-            cameras[-target_camera] - cameras[target_camera - 1],
-            cameras[target_camera - 1],
-            target_camera,
-        )
+        IP1 = self.intersection_line_with_imageplane(cameras[target_camera],
+            points[-target_camera - 1],
+            target_camera+1)
+        
+        IP2 = self.intersection_line_with_imageplane(cameras[target_camera],
+            cameras[-target_camera-1],
+            target_camera+1)
+        
 
-        distance = self.distance_point_line(IP1, IP2, points[target_camera - 1])
+        distance = self.distance_point_line(IP1, IP2, points[target_camera])
 
         return distance
 
@@ -220,7 +218,7 @@ class Positioner2:
 
                 # calculate distance between projected points and projected C1P1 and C2P1 for both images = d1 and d2
                 d1, d2 = self.get_d(point_camera_1, point_camera_2, 1), self.get_d(
-                    point_camera_1, point_camera_2, 2
+                    point_camera_1, point_camera_2, 0
                 )  # TODO: implement
 
                 cost = (
