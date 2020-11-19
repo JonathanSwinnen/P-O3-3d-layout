@@ -10,7 +10,7 @@ import numpy as np
 
 class KalmanPersonTracker:
 
-    def __init__(self, id, x0, u, std_acc, std_meas, dt):
+    def __init__(self, id, x0, u, std_acc, std_meas, dt, max_certain_speed, confidence_growth, confidence_fall):
         """Creates a new Kalman person tracker
 
         Parameters
@@ -29,10 +29,18 @@ class KalmanPersonTracker:
             sampling time
         """
         self.id = id
-
-        self.kf = KalmanFilter(dt, x0, u,  std_acc, std_meas)
+        self.dt = dt
+        self.kf = KalmanFilter(self.dt, x0, u,  std_acc, std_meas)
 
         self.pos = x0
+
+        self.confidence_growth = confidence_growth
+        self.confidence_fall = confidence_fall
+        self.confidence = 0.5
+
+        self.previous_updated_pos = x0[0:3]
+
+        self.max_certain_speed = max_certain_speed
 
     def predict(self):
         """Predicts the next position using the kalman filter
@@ -43,6 +51,9 @@ class KalmanPersonTracker:
             [x,y,z] of the predicted position
         """
         self.pos = self.kf.predict()
+        self.confidence -= self.confidence_fall
+        self.confidence = max(self.confidence, 0)
+        print("REDUCE confidence:",self.id,self.confidence,sep=",")
         return self.pos
 
     def update(self, z):
@@ -59,9 +70,23 @@ class KalmanPersonTracker:
             [x,y,z] of the updated filter position
         """
         if z != []:
-            
-            self.pos = self.kf.update(np.array([z]).T)
+            z_vect = np.array([z]).T
+            print("update " + self.id + "with val: " + str(z), "diff:" + str(z_vect - self.previous_updated_pos) + "")
+
+            spd = np.linalg.norm(z_vect - self.previous_updated_pos) / self.dt
+            if spd * self.confidence < self.max_certain_speed:
+                print("SPEED:", self.id, spd, self.confidence, sep=",")
+                self.pos = self.kf.update(z_vect)
+                self.confidence += self.confidence_growth * (1 - self.confidence)
+                self.confidence = max(self.confidence, 1)
+                print("ADD confidence:",self.id,self.confidence,sep=",")
+
+                self.previous_updated_pos = self.pos
+            else:
+                print("UPDATE REJECTED: misdetection or sudden jump?")
         return self.pos
+    
+
     
     
 

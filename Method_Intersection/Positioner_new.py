@@ -9,7 +9,7 @@ from numpy.lib.type_check import imag
 
 
 class Positioner2:
-    def __init__(self, calibration_values, pairing_range, missed_point_penalty):
+    def __init__(self, calibration_values, pairing_range, ignored_point_penalty):
         """Creates a new Positioner instance
 
         Parameters
@@ -21,6 +21,7 @@ class Positioner2:
         """
         self.calibration_values = calibration_values
         self.pairing_range = pairing_range
+        self.ignored_point_penalty = ignored_point_penalty
         d = 0.5
         self.M = [
             (d * self.calibration_values["dir_1"] + self.calibration_values["coord_1"]),
@@ -291,8 +292,10 @@ class Positioner2:
             # get cost from 3D points
             cost = self.get_mean_dets_vs_prediction_cost(dets, predictions)
             print("cost from pairing, ", chosen_pairings, cost, sep=",")
+            point_skips_penalty = (len(predictions) - len(chosen_pairings)) * self.ignored_point_penalty
+            if cost is not None:
+                cost += point_skips_penalty
             return cost, dets
-
         # loop over all pairing possibilities i for current index of points_camera_1 to get minimum cost
         min_cost = None
         best_dets = None
@@ -369,14 +372,12 @@ class Positioner2:
         cost_matrix = np.zeros((cost_matrix_dim, cost_matrix_dim))
         # loop over all predictions
         for pred_id in predictions:
-            prediction_pos = predictions[pred_id]
+            prediction_pos = predictions[pred_id][0]
             j = 0
             # loop over all detections
             for det_pos in dets:
                 # add cost matrix entry: distance between prediction point and detection point
-                cost_matrix[i][j] = np.linalg.norm(
-                    np.array(prediction_pos) - np.array(det_pos).T
-                )
+                cost_matrix[i][j] = np.linalg.norm(np.array(prediction_pos) - np.array([det_pos]).T) * predictions[pred_id][1]
                 j += 1
             i += 1
         # compute Hungarian algorithm

@@ -13,7 +13,7 @@ class Tracker():
             The list of PersonTrackers that are being tracked
     """
 
-    def __init__(self, u, std_acc, std_meas, dt):
+    def __init__(self, u, std_acc, std_meas, dt, max_certain_speed, confidence_growth, confidence_fall):
         """Creates a new Tracker
 
         Parameters
@@ -32,8 +32,11 @@ class Tracker():
         self.std_acc = std_acc
         self.std_meas = std_meas
         self.dt = dt
+        self.confidence_growth = confidence_growth
+        self.confidence_fall = confidence_fall
 
         self.positions = dict()
+        self.max_certain_speed = max_certain_speed
 
 
     def add_person(self, id, x0):
@@ -46,7 +49,7 @@ class Tracker():
         x0 : np.array
             initial state vector
         """
-        self.persons.append(PersonTracker.KalmanPersonTracker(id, x0, self.u, self.std_acc, self.std_meas, self.dt))
+        self.persons.append(PersonTracker.KalmanPersonTracker(id, x0, self.u, self.std_acc, self.std_meas, self.dt, self.max_certain_speed, self.confidence_growth, self.confidence_fall))
         
 
     def rm_person(self, id):
@@ -57,7 +60,7 @@ class Tracker():
         id : string
             person identifier to remove
         """
-        self.persons = list(self.persons.filter(lambda p: p.id != id, self.persons))
+        self.persons = list(filter(lambda p: p.id != id, self.persons))
 
 
     def predict(self, dt=None):
@@ -85,7 +88,7 @@ class Tracker():
                 
             # predict next position
             person.predict()
-            self.positions[person.id] = person.pos
+            self.positions[person.id] = (person.pos, person.confidence)
 
         return self.positions
 
@@ -114,7 +117,7 @@ class Tracker():
             # if index is within bounds
             if p_num < len(self.persons) and det_num < len(dets):
                 self.persons[p_num].update(dets[det_num])
-                self.positions[self.persons[p_num].id] = self.persons[p_num].pos
+                self.positions[self.persons[p_num].id] = (self.persons[p_num].pos, self.persons[p_num].confidence)
                 
         return self.positions
 
@@ -148,7 +151,7 @@ class Tracker():
             # loop over all detections
             for det_pos in dets:
                 # add cost matrix entry: distance between person prediction point and detection point
-                cost_matrix[i][j] = np.linalg.norm( np.array(person.pos) - np.array(det_pos) )
+                cost_matrix[i][j] = np.linalg.norm(np.array(person.pos) - np.array(det_pos)) #* person.get_certainty() #NOTE : COULD HAVE BAD EFFECTS
                 j += 1
             i += 1
 

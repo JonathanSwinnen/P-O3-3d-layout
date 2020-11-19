@@ -102,12 +102,9 @@ image_size = calibrated_values["image_size"]
 u = 0 * np.ones((3, 1))
 stac = 1
 stdm = np.array([[0.1],[0.1],[1]])
-tracker = Tracker(u, stac, stdm, 0.1)
+tracker = Tracker(u, stac, stdm, 0.1, 5, 0.6, 0.05)
 
-start_R = [[5], [5], [1], [0], [0], [0]]
-start_L = [[0], [5], [1], [0], [0], [0]]
-
-positioner = Positioner2(calibrated_values, 0.0027)
+positioner = Positioner2(calibrated_values, 0.002, 0.2)
 
 timestamps = extract_timestamps()
 
@@ -122,8 +119,8 @@ dt_last = None
 n = 0
 
 while True:
-    # cv2.waitKey()
-
+    #cv2.waitKey()
+    print("\nFRAME\n")
     #   This loop embodies the main workings of this method
     frame_1, frame_2, success = get_frames(camera_1, camera_2, image_size)
 
@@ -136,9 +133,9 @@ while True:
 
             elif event[1] == "Enter":
                 if event[2] == "R":
-                    tracker.add_person(event[0], start_R)
+                    tracker.add_person(event[0], [[4], [4.5], [1.3], [0], [0], [0]])
                 elif event[2] == "L":
-                    tracker.add_person(event[0], start_L)
+                    tracker.add_person(event[0], [[0], [5], [1.3], [0], [0], [0]])
 
         # dt calculation
         #stop = perf_counter()
@@ -152,70 +149,52 @@ while True:
         #   recognize every person in every frame:
         coordinates_1, coordinates_2, boxes_1, boxes_2 = detector.detect_both_frames(frame_1, frame_2)
 
-        key = cv2.waitKey(1)
+        # detect points
+        dets = positioner.get_XYZ(coordinates_1, coordinates_2, prediction)
+        # update filter
+        tracked_points = { id : values[0] for (id,values) in tracker.update(dets).items()}
 
-        # TODO: replace with GUI functions
-        if key % 256 == 27:
-            # ESC pressed
-            print("Escape hit, closing...")
-            cv2.destroyAllWindows()
-            break
+        for pers in tracked_points:
+            #if dets != []:
+                #print(
+                #    "change due to kalman filter:\n",
+                #    dets[0] - tracked_points[pers].T,
+                #    "\n___________________________________________________________",
+                #)
+            point_on_img = positioner.reprojectPoint(tracked_points[pers])
+            # print on image 1(point_on_img)
+            a, b, c, d = int(point_on_img[0][0]), int(point_on_img[0][1]), 20, 20
+            cv2.rectangle(frame_1, (a - c, b - d), (a + c, b + d), (255, 0, 210), 5)
+            cv2.putText(frame_1,pers, (a,b), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, 255)
 
-        elif key % 256 == 32:
-            #   space pressed:
-            #       pause right now, changes being made to code
-            print("paused, press space to continue")
-            print("debug time!")
-            while True:
-                key = cv2.waitKey(1)
-                if key % 256 == 32:
-                    #   play
-                    print("play")
-                    break
-        else:
-            # this frame needs to be saved and calculated!
+            # print on image 2(point_on_img)
+            a, b, c, d = int(point_on_img[1][0]), int(point_on_img[1][1]), 20, 20
+            cv2.rectangle(frame_2, (a - c, b - d), (a + c, b + d), (255, 0, 210), 5)
 
-            # detect points
-            dets = positioner.get_XYZ(coordinates_1, coordinates_2, prediction)
-            print("OMFG3", dets)
-            # update filter
-            tracked_points = tracker.update(dets)
+            cv2.putText(frame_2,pers, (a,b), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, 255)
 
-            for pers in tracked_points:
-                #if dets != []:
-                    #print(
-                    #    "change due to kalman filter:\n",
-                    #    dets[0] - tracked_points[pers].T,
-                    #    "\n___________________________________________________________",
-                    #)
-                point_on_img = positioner.reprojectPoint(tracked_points[pers])
-                # print on image 1(point_on_img)
-                a, b, c, d = int(point_on_img[0][0]), int(point_on_img[0][1]), 20, 20
-
-                cv2.rectangle(frame_1, (a - c, b - d), (a + c, b + d), (255, 0, 210), 5)
-
-                # print on image 2(point_on_img)
-                a, b, c, d = int(point_on_img[1][0]), int(point_on_img[1][1]), 20, 20
-
-                cv2.rectangle(frame_2, (a - c, b - d), (a + c, b + d), (255, 0, 210), 5)
-
-            # Plot boxes
-            for box in boxes_1:
-                cv2.rectangle(frame_1, (box[0], box[1]) , (box[2], box[3]), (50,50,200))
-            for box in boxes_2:
-                cv2.rectangle(frame_2, (box[0], box[1]) , (box[2], box[3]), (50,50,200))
-
-            # Plot dets
-            for det in dets:
-                point_on_img = positioner.reprojectPoint(np.array([det]).T)
-                a, b, c, d = int(point_on_img[0][0]), int(point_on_img[0][1]), 1, 1
-                cv2.rectangle(frame_1, (a, b), (a + c, b + d), (255, 150, 100), 5)
-                a, b, c, d = int(point_on_img[1][0]), int(point_on_img[1][1]), 1, 1
-                cv2.rectangle(frame_2, (a, b), (a + c, b + d), (255, 150, 100), 5)
-
-            cv2.imshow("Camera one...", frame_1)
-            cv2.imshow("Camera two...", frame_2)
-            cv2.waitKey(1)
+        
+        # Plot boxes
+        i=0
+        for box in boxes_1:
+            cv2.rectangle(frame_1, (box[0], box[1]) , (box[2], box[3]), (50,50,200))
+            cv2.putText(frame_1,str(i), (box[0],box[1]), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, 255)
+            i+=1
+        i=0
+        for box in boxes_2:
+            cv2.putText(frame_2,str(i), (box[0],box[1]), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, 255)
+            cv2.rectangle(frame_2, (box[0], box[1]) , (box[2], box[3]), (50,50,200))
+            i+=1
+        # Plot dets
+        for det in dets:
+            point_on_img = positioner.reprojectPoint(np.array([det]).T)
+            a, b, c, d = int(point_on_img[0][0]), int(point_on_img[0][1]), 1, 1
+            cv2.rectangle(frame_1, (a, b), (a + c, b + d), (255, 150, 100), 5)
+            a, b, c, d = int(point_on_img[1][0]), int(point_on_img[1][1]), 1, 1
+            cv2.rectangle(frame_2, (a, b), (a + c, b + d), (255, 150, 100), 5)
+        cv2.imshow("Camera one...", frame_1)
+        cv2.imshow("Camera two...", frame_2)
+        cv2.waitKey(1)
 
     else:
         print("Frame skipped.")
