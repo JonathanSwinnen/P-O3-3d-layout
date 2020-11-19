@@ -2,7 +2,6 @@
 # NOTE: NIET GETEST!!! Ik heb GEEN idee of die recursieve functie werkt of niet
 
 
-from math import dist
 from munkres import Munkres
 import numpy as np
 import munkres
@@ -119,6 +118,8 @@ class Positioner2:
         P1 = self.pixel_to_image_plane(point_camera_1, 1)
         P2 = self.pixel_to_image_plane(point_camera_2, 2)
         intersection = self.intersection_lines_of_sight(P1, P2)
+        print("3D POINT CALC: input: ", point_camera_1, point_camera_2, "output ", intersection, sep=",")
+
         return intersection
 
     def get_all_3d_points_with_pairing(
@@ -226,17 +227,18 @@ class Positioner2:
                 cost = (
                     d1 * d1 + d2 * d2
                 )  # define the cost as the sum of squared distances to the projected lines
-
+                print(cost)
                 # points that give a cost below the threshold are possible pairs
-                if cost < self.pairing_range:
-                    possible_pairings.append(i)
+                if cost <= self.pairing_range:
+                    possible_pairings[-1].append(i)
 
                 i += 1
 
         # get best point combinations and retrieve 3D points
-        best_dets = self.get_best_dets_recursively(
+        _, best_dets = self.get_best_dets_recursively(
             possible_pairings, points_camera_1, points_camera_2, predictions
         )
+        print("HOLAPOLA", best_dets)
         return best_dets
 
     # NOTE: This function is UNTESTED and MIGHT BE UTTER GARBAGE !!!!
@@ -291,6 +293,7 @@ class Positioner2:
             )
             # get cost from 3D points
             cost = self.get_mean_dets_vs_prediction_cost(dets, predictions)
+            print("pairings: ", chosen_pairings, cost)
             return cost, dets
 
         # loop over all pairing possibilities i for current index of points_camera_1 to get minimum cost
@@ -299,7 +302,7 @@ class Positioner2:
         for i in pairings_to_choose[current_pairing_index_1]:
             # new chosen pairings
             new_chosen_pairings = list(chosen_pairings)  # copy
-            new_chosen_pairings.append(current_pairing_index_1, i)  # add this pair
+            new_chosen_pairings.append((current_pairing_index_1, i))  # add this pair
             # new next pairings to choose -> move to next entry
             new_pairings_to_choose = list(pairings_to_choose)
             # remove duplicates of i from other pairing possibilities, so no camera point can be used twice, !!! CAN LEAD TO SKIPPED POINTS
@@ -307,7 +310,7 @@ class Positioner2:
                 if i in next_pairing:
                     next_pairing.remove(i)
             # recursion -> get dets from best pairing sequence after this one
-            cost, dets = self.test_pairings_recursively(
+            cost, dets = self.get_best_dets_recursively(
                 new_pairings_to_choose,
                 points_camera_1,
                 points_camera_2,
@@ -316,11 +319,13 @@ class Positioner2:
                 new_chosen_pairings,
             )
             # if this pairing & best next pairing together are optimal, set new best dets & cost
-            if min_cost is None or cost < min_cost:
+            if cost is not None and (min_cost is None or cost < min_cost):
+                print("GOTCHA")
                 min_cost = cost
                 best_dets = dets
 
         # return dets from best pairing sequence
+        print("YEES", best_dets)
         return min_cost, best_dets
 
     def get_mean_dets_vs_prediction_cost(self, dets, predictions):
@@ -339,6 +344,9 @@ class Positioner2:
         float
             the minimal cost
         """
+        if len(dets) == 0 or len(predictions) == 0:
+            return None
+
         # implementation of Hungarian method
         m = Munkres()
 
@@ -347,21 +355,22 @@ class Positioner2:
         # create cost matrix
         cost_matrix_dim = max(len(predictions), len(dets))
         cost_matrix = np.zeros((cost_matrix_dim, cost_matrix_dim))
+        print(cost_matrix)
         # loop over all predictions
-        for prediction_pos in predictions:
+        for pred_id in predictions:
+            prediction_pos = predictions[pred_id]
             j = 0
             # loop over all detections
             for det_pos in dets:
                 # add cost matrix entry: distance between prediction point and detection point
                 cost_matrix[i][j] = np.linalg.norm(
-                    np.array(prediction_pos) - np.array(det_pos)
+                    np.array(prediction_pos) - np.array(det_pos).T
                 )
                 j += 1
             i += 1
-
         # compute Hungarian algorithm
-        indices = m.compute(cost_matrix)
-
+        
+        indices = m.compute(np.copy(cost_matrix))
         # calculate final cost
         cost = 0
         # loop over all best matches
@@ -372,7 +381,8 @@ class Positioner2:
         cost /= len(indices)
         return cost
 
-    def get_XYZ(
+
+    def get_XYZ_old(
         self,
         points_camera_1,
         points_camera_2,
@@ -424,7 +434,7 @@ class Positioner2:
             )
             P1C2 = self.calibration_values["coord_2"] - P1
             IP1 = self.intersection_line_with_imageplane(
-                C1C2, self.calibration_values["coord1"], 2
+                C1C2, self.calibration_values["coord_1"], 2
             )
             IP2 = self.intersection_line_with_imageplane(P1C2, P1, 2)
 

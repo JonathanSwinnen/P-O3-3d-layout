@@ -233,6 +233,10 @@ class Positioner:
             b = self.calibration_values["coord_1"] - self.calibration_values["coord_2"]
 
             solution_4 = np.linalg.lstsq(A, b, rcond=-1)
+
+            print("3D POINT CALC: input: ", afb_pos_1, closest_position, "output ", (solution_4[0][0] * Line_1 + self.calibration_values["coord_1"])
+, sep=",")
+
             XYZ_POINTS += [
                 (solution_4[0][0] * Line_1 + self.calibration_values["coord_1"])
             ]

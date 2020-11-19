@@ -1,5 +1,6 @@
 import Calibration
 from Detector import Detector
+from Positioner_new import *
 from Positioner import *
 from Tracker import Tracker
 from time import perf_counter
@@ -106,7 +107,7 @@ tracker = Tracker(u, stac, stdm, 0.1)
 start_R = [[5], [5], [1], [0], [0], [0]]
 start_L = [[0], [5], [1], [0], [0], [0]]
 
-positioner = Positioner(calibrated_values, 0)
+positioner = Positioner2(calibrated_values, 0)
 
 timestamps = extract_timestamps()
 
@@ -174,7 +175,8 @@ while True:
             # this frame needs to be saved and calculated!
 
             # detect points
-            dets = positioner.get_XYZ(coordinates_1, coordinates_2)
+            dets = positioner.get_XYZ(coordinates_1, coordinates_2, prediction)
+            print("OMFG3", dets)
             # update filter
             tracked_points = tracker.update(dets)
 
