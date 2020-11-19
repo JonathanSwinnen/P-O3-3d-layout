@@ -1,7 +1,7 @@
 # Positioner.py rewrite
 # NOTE: NIET GETEST!!! Ik heb GEEN idee of die recursieve functie werkt of niet
 
-
+import copy
 from munkres import Munkres
 import numpy as np
 import munkres
@@ -9,7 +9,7 @@ from numpy.lib.type_check import imag
 
 
 class Positioner2:
-    def __init__(self, calibration_values, pairing_range):
+    def __init__(self, calibration_values, pairing_range, missed_point_penalty):
         """Creates a new Positioner instance
 
         Parameters
@@ -23,8 +23,8 @@ class Positioner2:
         self.pairing_range = pairing_range
         d = 0.5
         self.M = [
-            (self.calibration_values["dir_1"] + d * self.calibration_values["coord_1"]),
-            (self.calibration_values["dir_2"] + d * self.calibration_values["coord_2"]),
+            (d * self.calibration_values["dir_1"] + self.calibration_values["coord_1"]),
+            (d * self.calibration_values["dir_2"] + self.calibration_values["coord_2"]),
         ]
         self.x_vector = [self.calibration_values["x1"], self.calibration_values["x2"]]
         self.y_vector = [self.calibration_values["y1"], self.calibration_values["y2"]]
@@ -118,7 +118,6 @@ class Positioner2:
         P1 = self.pixel_to_image_plane(point_camera_1, 1)
         P2 = self.pixel_to_image_plane(point_camera_2, 2)
         intersection = self.intersection_lines_of_sight(P1, P2)
-        print("3D POINT CALC: input: ", point_camera_1, point_camera_2, "output ", intersection, sep=",")
 
         return intersection
 
@@ -227,18 +226,19 @@ class Positioner2:
                 cost = (
                     d1 * d1 + d2 * d2
                 )  # define the cost as the sum of squared distances to the projected lines
-                print(cost)
                 # points that give a cost below the threshold are possible pairs
+                print("Projection error:", (len(possible_pairings)-1, i), cost, sep=",")
                 if cost <= self.pairing_range:
                     possible_pairings[-1].append(i)
 
                 i += 1
 
+        print("pairing options:", possible_pairings)
+
         # get best point combinations and retrieve 3D points
         _, best_dets = self.get_best_dets_recursively(
             possible_pairings, points_camera_1, points_camera_2, predictions
         )
-        print("HOLAPOLA", best_dets)
         return best_dets
 
     # NOTE: This function is UNTESTED and MIGHT BE UTTER GARBAGE !!!!
@@ -250,7 +250,7 @@ class Positioner2:
         points_camera_2,
         predictions,
         current_pairing_index_1=0,
-        chosen_pairings=[],
+        chosen_pairings=[]
     ):
         """Recursively finds the best 3D point detections, given a set of pairings to choose from
 
@@ -277,7 +277,6 @@ class Positioner2:
         list
             best 3D point detections from given pairing options
         """
-
         # skip leading empty entries
         while (
             current_pairing_index_1 < len(pairings_to_choose)
@@ -293,18 +292,35 @@ class Positioner2:
             )
             # get cost from 3D points
             cost = self.get_mean_dets_vs_prediction_cost(dets, predictions)
-            print("pairings: ", chosen_pairings, cost)
+            print("cost from pairing, ", chosen_pairings, cost, sep=",")
             return cost, dets
 
         # loop over all pairing possibilities i for current index of points_camera_1 to get minimum cost
         min_cost = None
         best_dets = None
+
+        # first case is when no point is chosen:
+        new_chosen_pairings = copy.deepcopy(chosen_pairings)
+        new_pairings_to_choose = copy.deepcopy(pairings_to_choose)
+        cost, dets = self.get_best_dets_recursively(
+            new_pairings_to_choose,
+            points_camera_1,
+            points_camera_2,
+            predictions,
+            current_pairing_index_1 + 1,
+            new_chosen_pairings,
+        )
+        if cost is not None and (min_cost is None or cost < min_cost):
+            min_cost = cost
+            best_dets = dets
+
+        # do choose one from the list
         for i in pairings_to_choose[current_pairing_index_1]:
             # new chosen pairings
-            new_chosen_pairings = list(chosen_pairings)  # copy
+            new_chosen_pairings = copy.deepcopy(chosen_pairings)  # copy
             new_chosen_pairings.append((current_pairing_index_1, i))  # add this pair
             # new next pairings to choose -> move to next entry
-            new_pairings_to_choose = list(pairings_to_choose)
+            new_pairings_to_choose = copy.deepcopy(pairings_to_choose)
             # remove duplicates of i from other pairing possibilities, so no camera point can be used twice, !!! CAN LEAD TO SKIPPED POINTS
             for next_pairing in new_pairings_to_choose:
                 if i in next_pairing:
@@ -320,12 +336,10 @@ class Positioner2:
             )
             # if this pairing & best next pairing together are optimal, set new best dets & cost
             if cost is not None and (min_cost is None or cost < min_cost):
-                print("GOTCHA")
                 min_cost = cost
                 best_dets = dets
 
         # return dets from best pairing sequence
-        print("YEES", best_dets)
         return min_cost, best_dets
 
     def get_mean_dets_vs_prediction_cost(self, dets, predictions):
@@ -355,7 +369,6 @@ class Positioner2:
         # create cost matrix
         cost_matrix_dim = max(len(predictions), len(dets))
         cost_matrix = np.zeros((cost_matrix_dim, cost_matrix_dim))
-        print(cost_matrix)
         # loop over all predictions
         for pred_id in predictions:
             prediction_pos = predictions[pred_id]
