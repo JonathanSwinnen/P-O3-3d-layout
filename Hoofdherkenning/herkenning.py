@@ -96,12 +96,12 @@ def main():
         print("Saved the model at:", os.path.join(MODEL_PATH, "training_" + str(epoch) + ".pth"))
         torch.save(model, os.path.join(MODEL_PATH, "training_" + str(epoch) + ".pth"))
 
-    plot_losses.plt_losses(num_epochs, tr_loss, val_score, os.path.join(MODEL_PATH, "losses.png"))
+
     print(tr_loss, val_score)
 
     print("That's it! The best modelversion is: ", val_score.index(max(val_score)) + 1)
     print("Path: " + os.path.join(MODEL_PATH, "training_" + str(val_score.index(max(val_score)) + 1) + ".pth"))
-
+    plot_losses.plt_losses(num_epochs, tr_loss, val_score, os.path.join(MODEL_PATH, "losses.png"))
 
 if __name__ == "__main__":
     main()
