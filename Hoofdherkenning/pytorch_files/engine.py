@@ -81,15 +81,17 @@ def evaluate(model, data_loader, device):
     iou_types = _get_iou_types(model)
     coco_evaluator = CocoEvaluator(coco, iou_types)
 
+    loss = []
     for images, targets in metric_logger.log_every(data_loader, 100, header):
         images = list(img.to(device) for img in images)
 
         torch.cuda.synchronize()
         model_time = time.time()
         outputs = model(images)
-        print("t1", outputs)
         outputs = [{k: v.to(cpu_device) for k, v in t.items()} for t in outputs]
-        print("t2", outputs)
+        if len(outputs[0]["scores"]) != 0:
+            loss.append(float(sum(outputs[0]["scores"]) / len(outputs[0]["scores"])))
+
         model_time = time.time() - model_time
 
         res = {target["image_id"].item(): output for target, output in zip(targets, outputs)}
@@ -107,4 +109,4 @@ def evaluate(model, data_loader, device):
     coco_evaluator.accumulate()
     coco_evaluator.summarize()
     torch.set_num_threads(n_threads)
-    return coco_evaluator
+    return coco_evaluator, sum(loss)/len(loss)

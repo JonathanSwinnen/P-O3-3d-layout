@@ -1,25 +1,18 @@
 import matplotlib.pyplot as plt
 import time
 
-epochs = [i for i in range(35)]
-losses = [0.2229, 0.2125, 0.1642, 0.1053, 0.1009, 0.1192, 0.0807, 0.0788, 0.0962, 0.1265,
-          0.1108,  0.1296, 0.0775, 0.0918, 0.0952, 0.1092, 0.1220, 0.1100, 0.1023, 0.0938,
-          0.0901, 0.0836, 0.1245, 0.0941, 0.0950, 0.0640, 0.1015, 0.1063, 0.0782, 0.1059,
-          0.1155, 0.0876, 0.0865, 0.0941, 0.1282]
-AP_all = [0.234, 0.496, 0.624, 0.663, 0.668, 0.676, 0.678, 0.676, 0.679, 0.680, 0.678,
-          0.679, 0.679, 0.679, 0.679, 0.679, 0.679, 0.679, 0.679, 0.679, 0.679, 0.679, 0.679,
-          0.679, 0.679, 0.679, 0.679, 0.679, 0.679, 0.679, 0.679, 0.679, 0.679, 0.679, 0.679]
-AR_all = [0.463, 0.573, 0.686, 0.724, 0.734, 0.740, 0.740, 0.736, 0.740, 0.741, 0.740,
-          0.740, 0.740, 0.740, 0.740, 0.740, 0.740, 0.740, 0.740, 0.740, 0.740, 0.740, 0.740,
-          0.740, 0.740, 0.740, 0.740, 0.740, 0.740, 0.740, 0.740, 0.740, 0.740, 0.740, 0.740]
 
-print(len(losses), len(AP_all), len(AR_all))
+def plt_losses(epochs, tr_loss, val_score, store_path="./saved_models/losses.png"):
 
-plt.plot(epochs, losses, 'r', label='Training losses')
-plt.plot(epochs, AP_all, 'g', label='Average precision')
-plt.plot(epochs, AR_all, 'b', label='Average recall')
-plt.xlabel('Epochs')
-plt.ylabel('Value')
-plt.title('Training parameters in function of epochs')
-plt.legend()
-plt.show()
+    # add values
+    plt.plot(epochs, tr_loss, 'r', label='Training losses')
+    plt.plot(epochs, val_score, 'g', label='Validation score')
+
+    # labels
+    plt.xlabel('Epochs')
+    plt.ylabel('Value')
+    plt.title('Training parameters in function of epochs')
+    plt.legend()
+
+    # save plot as .png
+    plt.savefig(store_path)

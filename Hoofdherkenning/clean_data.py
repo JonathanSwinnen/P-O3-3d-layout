@@ -73,6 +73,10 @@ def generate_clean_data(data_paths, storing_path="./adjusted_data/clean_ann_scal
                 # no subdirectory: './data/a_map/img_xx.png'
                 img_path = full_path[:-5].replace("/ann", "")
 
+            # if adjusted scaling change path
+            if SCALING_DOWN_FACTOR != 1:
+                img_path = img_path.replace("raw_data", "adjusted_data")
+
             # store in dict
             data[img_path] = (boxes, classes)
 

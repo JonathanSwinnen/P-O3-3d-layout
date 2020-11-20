@@ -4,11 +4,18 @@ from PIL import Image
 
 from itertools import chain
 import pickle
+import pytorch_files.transforms as T
 
+def get_transform(train):
+    transforms = []
+    transforms.append(T.ToTensor())
+    if train:
+        transforms.append(T.RandomHorizontalFlip(0.5))
+    return T.Compose(transforms)
 
-class PO3Dataset(object):
+class PO3Dataset_Training(object):
     """
-    Custom dataset class for a head detector.
+    Custom dataset class for training a head detector model.
     """
     def __init__(self, paths, transforms, SUB_MAPS=False, ann_path="./adjusted_data/clean_ann_scaled.pkl"):
         # paths where images are located
@@ -24,17 +31,17 @@ class PO3Dataset(object):
         # load annotations from given file_path
         f = open(ann_path, 'rb')
         self.ann = pickle.load(f)
-        print(self.ann)
         f.close()
 
         # load all image files from given paths, sorting them to
         # ensure that they are aligned
         self.imgs = []
 
+        submap = ""
         if self.sub_maps:
             submap = "img/"
             
-        for root, dirs, files in (chain.from_iterable(os.walk(os.path.join(path, "img/"))) if self.sub_maps else chain.from_iterable(os.walk(path))) for path in paths:
+        for root, dirs, files in chain.from_iterable(os.walk(os.path.join(path, submap)) for path in paths):
             for file in files:
                 # add image
                 self.imgs += [os.path.join(root, file)]
@@ -43,7 +50,7 @@ class PO3Dataset(object):
         print("Total images in dataset:", len(self.imgs))
 
     def __getitem__(self, idx):
-        # load images ad masks
+        # load an image
         image_id = torch.tensor([idx])
         img_path = self.imgs[idx]
         img = Image.open(img_path).convert("RGB")
@@ -57,8 +64,6 @@ class PO3Dataset(object):
             labels = torch.zeros((len(boxes),), dtype=torch.int64)
         else:  # heads
             labels = torch.ones((len(boxes),), dtype=torch.int64)
-
-        print("labels:", labels)
 
         # calc area
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
@@ -76,6 +81,28 @@ class PO3Dataset(object):
         if self.transforms is not None:
             img, target = self.transforms(img, target)
 
+        return img, target
+
+    def __len__(self):
+        return len(self.imgs)
+
+class PO3Dataset_evaluating(object):
+    """
+    Custom dataset class for evaluating a head detector model.
+    """
+    def __init__(self, imgs, transforms):
+        # paths where images are located
+        self.imgs = imgs
+        self.transorms = transforms
+
+    def __getitem__(self, idx):
+        img = self.imgs[idx]
+
+        target = dict()
+        target["image_id"] = torch.tensor([idx])
+
+        if self.transforms is not None:
+            img, target = self.transforms(img, target)
         return img, target
 
     def __len__(self):
