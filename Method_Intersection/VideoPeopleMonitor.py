@@ -22,7 +22,7 @@ class VideoPeopleMonitor:
         self.camera_1 = cv2.VideoCapture(vid_path_1)
         self.camera_2 = cv2.VideoCapture(vid_path_2)
 
-        self.dt = self.camera_1.get(cv2.CAP_PROP_FPS)
+        self.dt = 1/self.camera_1.get(cv2.CAP_PROP_FPS)
 
         self.calibrated_values = Calibration.load_calibration(calib_path)
         self.image_size = self.calibrated_values["image_size"]
@@ -96,6 +96,8 @@ class VideoPeopleMonitor:
                 boxes_2,
             ) = self.detector.detect_both_frames(self.frame_1, self.frame_2)
 
+            if coordinates_1 and coordinates_2:
+                print("debug")
             # this frame needs to be saved and calculated!
             # detect points
             dets = self.positioner.get_XYZ(coordinates_1, coordinates_2, prediction)
