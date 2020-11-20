@@ -3,7 +3,7 @@
 800,Jonathan,Exit,L
 1150,Jonathan,Enter,L
 1270,Jonathan,Exit,R
-1350,Daan,Enter,R
+1360,Daan,Enter,R
 1530,Daan,Exit,L
 1580,Jonathan,Enter,R
 1650,Jonathan,Exit,L
@@ -19,6 +19,6 @@
 2360,Daan,Enter,R
 2510,Jonathan,Exit,R
 2540,Daan,Exit,L
-2560,Daan,Enter,L
-2850,Daan,Exit,R
+2570,Daan,Enter,L
+2860,Daan,Exit,R
 2890,Daan,Enter,R

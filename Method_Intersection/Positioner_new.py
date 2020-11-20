@@ -9,7 +9,7 @@ from numpy.lib.type_check import imag
 
 
 class Positioner2:
-    def __init__(self, calibration_values, pairing_range, ignored_point_penalty):
+    def __init__(self, calibration_values, pairing_range, ignored_point_penalty, room_dim):
         """Creates a new Positioner instance
 
         Parameters
@@ -22,6 +22,7 @@ class Positioner2:
         self.calibration_values = calibration_values
         self.pairing_range = pairing_range
         self.ignored_point_penalty = ignored_point_penalty
+        self.room_dim = (np.array(room_dim[0]), np.array(room_dim[1]))
         d = 0.5
         self.M = [
             (d * self.calibration_values["dir_1"] + self.calibration_values["coord_1"]),
@@ -226,8 +227,12 @@ class Positioner2:
                     d1 * d1 + d2 * d2
                 )  # define the cost as the sum of squared distances to the projected lines
                 # points that give a cost below the threshold are possible pairs
+
+                pt = np.array(self.get_single_3d_point(point_camera_1, point_camera_2))
+                in_room = np.greater(pt, self.room_dim[0]).all() and np.less(pt, self.room_dim[1]).all()
+                print("IN ROOM : ", str(in_room))
                 print("Projection error:", (len(possible_pairings)-1, i), cost, sep=",")
-                if cost <= self.pairing_range:
+                if cost <= self.pairing_range and in_room:
                     possible_pairings[-1].append(i)
 
                 i += 1
@@ -393,95 +398,6 @@ class Positioner2:
         cost /= len(indices)
         return cost
 
-
-    def get_XYZ_old(
-        self,
-        points_camera_1,
-        points_camera_2,
-    ):
-        """Determines the XYZ point of the given point seen by two camera's
-
-        Notes:
-            - function receives, works with, and returns values in [meter]
-            - camera one is positioned above the axis origin
-            - direction camera1,camera2 is the direction of the x-axis
-            - y axis is pointed lateral to x, in the direction the cameras are looking at
-            - z axis is pointed up
-
-        Args:
-            self.calibration_values["image_size"]: Size of the images (#pixels x, #pixels y)
-            fov: field of view of the camera (horizontally)
-            point_camera_1 /2 : the pixel on the images where the point is seen
-            self.calibration_values["coord_1"] and self.calibration_values["coord_2"]: positions of cameras
-            self.calibration_values["dir_1"] and self.calibration_values["dir_2"]: direction of cameras
-
-        Returns:
-            the calculated XYZ points, in a list of np.arrays
-        """
-
-        XYZ_POINTS = []
-        #   center point of plane:
-        d = 0.5
-        M1 = self.calibration_values["dir_1"] + d * self.calibration_values["coord_1"]
-        #   now we can determine the location of the recognized point in space (P1)
-        #       first, determine the middle of the image:
-
-        #   thus, we need a mathematical representation of the second 'imagescreen' plane bv2
-        #   we know where the camera faces (self.calibration_values["dir_2"]) and distance d
-        M2 = self.calibration_values["coord_2"] + d * self.calibration_values["dir_2"]
-
-        # TODO: optimise: delete already calculated points
-
-        for afb_pos_1 in points_camera_1:
-            #   determine line between coord_1 and point on projected image plane 1 (point that has to be calculated)
-            #   projected image plane 1
-            P1 = self.pixel_to_image_plane(afb_pos_1, 1)
-
-            #   by knowing two points of the projection of line C1P1 on the second image, we can determine the line completely:
-            #                   intersection of C1C2 and the plane bv2
-            #                   and of P1C2 and the plane bv2
-            #   To find the intersections, two linear systems need to be computed
-            C1C2 = (
-                self.calibration_values["coord_2"] - self.calibration_values["coord_1"]
-            )
-            P1C2 = self.calibration_values["coord_2"] - P1
-            IP1 = self.intersection_line_with_imageplane(
-                C1C2, self.calibration_values["coord_1"], 2
-            )
-            IP2 = self.intersection_line_with_imageplane(P1C2, P1, 2)
-
-            Line_of_sight_1 = IP2 - IP1
-            Line_of_sight_1_norm = np.linalg.norm(
-                Line_of_sight_1
-            )  #    (normalizing the vector)
-            Line_of_sight_1 = Line_of_sight_1 / Line_of_sight_1_norm
-
-            #   Now we know where the line-of-sight of camera1 towards said person is,
-            #       we need to find the closest recognized point on camera two's image
-            #       the intersection of the line between this point and self.calibration_values["coord_2"] and the first line C1P1 is the XYZ point!
-
-            #   P2 is the point of the person in camera2's image
-            #   for every detected point on image_2: find the distance, and determine which is most likely to be the right one
-            distance = None
-            closest_position = None
-            shortest_distance = None
-
-            for recognized_pos_2 in points_camera_2:
-                P2 = self.pixel_to_image_plane(recognized_pos_2, 2)
-                #   find distance of P2 to Line_of_Sight_1
-                distance = self.distance_point_line(IP1, IP2, P2)
-                if (
-                    not shortest_distance or distance <= shortest_distance
-                ):  # - self.uncertainty_range
-                    shortest_distance = distance
-                    closest_position = recognized_pos_2
-
-            # closest match is found: closest_position
-            P2 = self.pixel_to_image_plane(closest_position, 2)
-
-            XYZ_POINTS += [(self.intersection_lines_of_sight(P1, P2))]
-
-        return XYZ_POINTS
 
     def reprojectPoint(self, xyz):
         # TODO: vervang deze placeholder code met projectie

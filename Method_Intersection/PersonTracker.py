@@ -31,12 +31,11 @@ class KalmanPersonTracker:
         self.id = id
         self.dt = dt
         self.kf = KalmanFilter(self.dt, x0, u,  std_acc, std_meas)
-
         self.pos = x0
 
         self.confidence_growth = confidence_growth
         self.confidence_fall = confidence_fall
-        self.confidence = 0.5
+        self.confidence = 1
 
         self.previous_updated_pos = x0[0:3]
 
@@ -77,8 +76,8 @@ class KalmanPersonTracker:
             if spd * self.confidence < self.max_certain_speed:
                 print("SPEED:", self.id, spd, self.confidence, sep=",")
                 self.pos = self.kf.update(z_vect)
-                self.confidence += self.confidence_growth * (1 - self.confidence)
-                self.confidence = max(self.confidence, 1)
+                self.confidence += self.confidence_growth
+                self.confidence = min(self.confidence, 1)
                 print("ADD confidence:",self.id,self.confidence,sep=",")
 
                 self.previous_updated_pos = self.pos

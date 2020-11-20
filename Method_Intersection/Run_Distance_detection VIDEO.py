@@ -100,11 +100,11 @@ image_size = calibrated_values["image_size"]
 
 
 u = 0 * np.ones((3, 1))
-stac = 1
-stdm = np.array([[0.1],[0.1],[1]])
-tracker = Tracker(u, stac, stdm, 0.1, 5, 0.6, 0.05)
+stac = 0.8
+stdm = np.array([[0.1],[0.11],[0.9]])
+tracker = Tracker(u, stac, stdm, 0.1, 5, 0.3, 0.1)
 
-positioner = Positioner2(calibrated_values, 0.002, 0.2)
+positioner = Positioner2(calibrated_values, 0.002, 0.2, ([-1,0,0], [6,7,3]))
 
 timestamps = extract_timestamps()
 
@@ -137,14 +137,11 @@ while True:
                 elif event[2] == "L":
                     tracker.add_person(event[0], [[0], [5], [1.3], [0], [0], [0]])
 
-        # dt calculation
-        #stop = perf_counter()
-        #dt = stop - start
-        #start = stop
-        dt = 0.1
+        #dt calculation
+        start = perf_counter()
 
         # make tracker prediction
-        prediction = tracker.predict(dt)
+        prediction = tracker.predict(0.1)
 
         #   recognize every person in every frame:
         coordinates_1, coordinates_2, boxes_1, boxes_2 = detector.detect_both_frames(frame_1, frame_2)
@@ -152,7 +149,7 @@ while True:
         # detect points
         dets = positioner.get_XYZ(coordinates_1, coordinates_2, prediction)
         # update filter
-        tracked_points = { id : values[0] for (id,values) in tracker.update(dets).items()}
+        tracked_points = tracker.update(dets)
 
         for pers in tracked_points:
             #if dets != []:
@@ -161,17 +158,18 @@ while True:
                 #    dets[0] - tracked_points[pers].T,
                 #    "\n___________________________________________________________",
                 #)
-            point_on_img = positioner.reprojectPoint(tracked_points[pers])
+            point_on_img = positioner.reprojectPoint(tracked_points[pers][0])
             # print on image 1(point_on_img)
             a, b, c, d = int(point_on_img[0][0]), int(point_on_img[0][1]), 20, 20
             cv2.rectangle(frame_1, (a - c, b - d), (a + c, b + d), (255, 0, 210), 5)
-            cv2.putText(frame_1,pers, (a,b), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, 255)
+            cv2.putText(frame_1, pers, (a,b), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, 255)
+            cv2.putText(frame_1, "c=" + str(round(tracked_points[pers][1],2)), (a,b+20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, 255)
 
             # print on image 2(point_on_img)
             a, b, c, d = int(point_on_img[1][0]), int(point_on_img[1][1]), 20, 20
             cv2.rectangle(frame_2, (a - c, b - d), (a + c, b + d), (255, 0, 210), 5)
-
             cv2.putText(frame_2,pers, (a,b), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, 255)
+            cv2.putText(frame_2, "c=" + str(round(tracked_points[pers][1],2)), (a,b+20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, 255)
 
         
         # Plot boxes
@@ -194,7 +192,11 @@ while True:
             cv2.rectangle(frame_2, (a, b), (a + c, b + d), (255, 150, 100), 5)
         cv2.imshow("Camera one...", frame_1)
         cv2.imshow("Camera two...", frame_2)
-        cv2.waitKey(1)
+
+        stop = perf_counter()
+        dt = stop - start
+        print("WAIT",dt*1000, int(max(1, 100 - dt*1000)))
+        cv2.waitKey(int(max(1, 100 - dt*1000)))
 
     else:
         print("Frame skipped.")
@@ -202,7 +204,6 @@ while True:
 
 # output: dictionary { "naam": ( [[x],[y],[z]], [x, y], [x, y], [x1, y1, x2, y2], [x1, y1, x2, y2]), ...etc... } , 
 # output: dictionary { "naam": ([3D positie], [2D punt op linkse foto], [2D punt op rechtse foto], [bounding box op linkse foto], [bounding box op rechtse foto]) }
-
 
 
 # TODO: display this in the GUI

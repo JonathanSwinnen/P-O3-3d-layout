@@ -151,12 +151,12 @@ class Tracker():
             # loop over all detections
             for det_pos in dets:
                 # add cost matrix entry: distance between person prediction point and detection point
-                cost_matrix[i][j] = np.linalg.norm(np.array(person.pos) - np.array(det_pos)) #* person.get_certainty() #NOTE : COULD HAVE BAD EFFECTS
+                cost_matrix[i][j] = np.linalg.norm(np.array(person.pos) - np.array([det_pos]).T)
                 j += 1
             i += 1
 
         # compute Hungarian algorithm
-        indices = m.compute(cost_matrix)
+        indices = m.compute(np.copy(cost_matrix))
 
         # calculate final cost
         cost = 0
@@ -165,7 +165,7 @@ class Tracker():
             if p_num < len(self.persons) and det_num < len(dets):
                 # add match cost to total
                 cost += cost_matrix[p_num][det_num]
-        
+        print("Tracker Pairing cost:", cost_matrix, cost, sep="\n")
         return indices, cost
         
 
