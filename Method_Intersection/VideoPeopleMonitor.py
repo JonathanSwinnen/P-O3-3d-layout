@@ -31,9 +31,9 @@ class VideoPeopleMonitor:
 
         #   Initialize the tracker with appropriate values:
         u = 0 * np.ones((3, 1))
-        stac = 0.8
-        stdm = np.array([[0.1], [0.11], [0.9]])
-        self.tracker = Tracker(u, stac, stdm, 0.1, 5, 0.3, 0.1)
+        stac = 0.95
+        stdm = np.array([[0.1], [0.1], [0.9]])
+        self.tracker = Tracker(u, stac, stdm, 0.1, 4, 0.3, 0.1)
 
         self.positioner = Positioner(
             self.calibrated_values, 0.002, 0.2, ([-1, 0, 0], [6, 7, 3])
@@ -43,7 +43,9 @@ class VideoPeopleMonitor:
         self.frame_2 = None
         self.has_captured_frame = False
 
-        self.frame_count = 0
+        self.frame_count = 1890
+        self.camera_1.set(cv2.CAP_PROP_POS_FRAMES,self.frame_count)
+        self.camera_2.set(cv2.CAP_PROP_POS_FRAMES,self.frame_count)
 
         ts_file = open(person_timestamps_path, "r")
         ts_lines = ts_file.read().split("\n")
@@ -96,8 +98,6 @@ class VideoPeopleMonitor:
                 boxes_2,
             ) = self.detector.detect_both_frames(self.frame_1, self.frame_2)
 
-            if coordinates_1 and coordinates_2:
-                print("debug")
             # this frame needs to be saved and calculated!
             # detect points
             dets = self.positioner.get_XYZ(coordinates_1, coordinates_2, prediction)

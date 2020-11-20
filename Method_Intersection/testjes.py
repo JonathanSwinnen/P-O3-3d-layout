@@ -17,7 +17,7 @@ cv2.namedWindow("Camera one...")
 cv2.namedWindow("Camera two...")
 
 while True:
-    cv2.waitKey(1)
+    cv2.waitKey()
     print("\nFRAME\n")
     frame_1, frame_2, _ = vm.get_frames()
     data, boxes = vm.update()

@@ -108,7 +108,7 @@ class Tracker():
         """
 
         # get indices of matching points with minimal cost combinations using Hungarian method
-        if len(dets) == 0:
+        if not dets:
             return self.positions
 
         indices, _ = self.get_min_cost(dets)
