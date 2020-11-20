@@ -227,7 +227,7 @@ while True:
         dt = stop - start
         print("WAIT", dt * 1000, int(max(1, 100 - dt * 1000)))
         # cv2.waitKey(int(max(1, 100 - dt * 1000)))
-        cv2.waitKey()
+        cv2.waitKey(1)
 
     else:
         print("Frame skipped.")

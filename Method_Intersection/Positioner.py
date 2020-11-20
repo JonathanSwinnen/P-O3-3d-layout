@@ -117,10 +117,11 @@ class Positioner:
         return solution_4[0][0] * Line_1 + self.calibration_values["coord_1"]
 
     def get_single_3d_point(self, point_camera_1, point_camera_2):
+        print("points from which to calculate:", point_camera_1, point_camera_2)
         P1 = self.pixel_to_image_plane(point_camera_1, 1)
         P2 = self.pixel_to_image_plane(point_camera_2, 2)
         intersection = self.intersection_lines_of_sight(P1, P2)
-
+        print("answer:", intersection)
         return intersection
 
     def get_all_3d_points_with_pairing(
