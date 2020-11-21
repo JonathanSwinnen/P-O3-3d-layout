@@ -79,7 +79,7 @@ def main():
     val_score = []
 
     # let's train it for a few epochs
-    num_epochs = 6
+    num_epochs = 100
 
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
@@ -91,6 +91,7 @@ def main():
         # evaluate on the test dataset
         _, epoch_val_score = evaluate(model, data_loader_test, device=device)
         print("Validation score:", epoch_val_score)
+        val_score.append(epoch_val_score)
 
         # save current version of the model
         print("Saved the model at:", os.path.join(MODEL_PATH, "training_" + str(epoch) + ".pth"))
@@ -101,6 +102,7 @@ def main():
 
     print("That's it! The best modelversion is: ", val_score.index(max(val_score)) + 1)
     print("Path: " + os.path.join(MODEL_PATH, "training_" + str(val_score.index(max(val_score)) + 1) + ".pth"))
+
     plot_losses.plt_losses(num_epochs, tr_loss, val_score, os.path.join(MODEL_PATH, "losses.png"))
 
 if __name__ == "__main__":

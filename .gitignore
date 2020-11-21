@@ -10,7 +10,7 @@ Hoofdherkenning/data/
 Hoofdherkenning/raw_data/
 Hoofdherkenning/adjusted_data/
 Hoofdherkenning/videos/
-Hoofdherkenning/saved_models/
+# Hoofdherkenning/saved_models/
 
 
 ### Python template

@@ -89,6 +89,7 @@ def evaluate(model, data_loader, device):
         model_time = time.time()
         outputs = model(images)
         outputs = [{k: v.to(cpu_device) for k, v in t.items()} for t in outputs]
+
         if len(outputs[0]["scores"]) != 0:
             loss.append(float(sum(outputs[0]["scores"]) / len(outputs[0]["scores"])))
 
