@@ -6,6 +6,7 @@ from itertools import chain
 import pickle
 import pytorch_files.transforms as T
 
+
 def get_transform(train):
     transforms = []
     transforms.append(T.ToTensor())
@@ -13,7 +14,8 @@ def get_transform(train):
         transforms.append(T.RandomHorizontalFlip(0.5))
     return T.Compose(transforms)
 
-class PO3Dataset_Training(object):
+
+class PO3Dataset(object):
     """
     Custom dataset class for training a head detector model.
     """
@@ -81,28 +83,6 @@ class PO3Dataset_Training(object):
         if self.transforms is not None:
             img, target = self.transforms(img, target)
 
-        return img, target
-
-    def __len__(self):
-        return len(self.imgs)
-
-class PO3Dataset_evaluating(object):
-    """
-    Custom dataset class for evaluating a head detector model.
-    """
-    def __init__(self, imgs, transforms):
-        # paths where images are located
-        self.imgs = imgs
-        self.transorms = transforms
-
-    def __getitem__(self, idx):
-        img = self.imgs[idx]
-
-        target = dict()
-        target["image_id"] = torch.tensor([idx])
-
-        if self.transforms is not None:
-            img, target = self.transforms(img, target)
         return img, target
 
     def __len__(self):

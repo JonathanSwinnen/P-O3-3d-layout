@@ -81,7 +81,7 @@ def evaluate(model, data_loader, device):
     iou_types = _get_iou_types(model)
     coco_evaluator = CocoEvaluator(coco, iou_types)
 
-    loss = []
+    score = []
     for images, targets in metric_logger.log_every(data_loader, 100, header):
         images = list(img.to(device) for img in images)
 
@@ -90,8 +90,9 @@ def evaluate(model, data_loader, device):
         outputs = model(images)
         outputs = [{k: v.to(cpu_device) for k, v in t.items()} for t in outputs]
 
+        # get validation scores
         if len(outputs[0]["scores"]) != 0:
-            loss.append(float(sum(outputs[0]["scores"]) / len(outputs[0]["scores"])))
+            score.append(float(sum(outputs[0]["scores"]) / len(outputs[0]["scores"])))
 
         model_time = time.time() - model_time
 
@@ -110,4 +111,4 @@ def evaluate(model, data_loader, device):
     coco_evaluator.accumulate()
     coco_evaluator.summarize()
     torch.set_num_threads(n_threads)
-    return coco_evaluator, sum(loss)/len(loss)
+    return coco_evaluator, sum(score)/len(score)

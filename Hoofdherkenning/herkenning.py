@@ -41,8 +41,8 @@ def main():
     num_classes = 2
 
     # use our dataset and defined transformations
-    dataset = PO3_dataset.PO3Dataset_Training(paths, PO3_dataset.get_transform(train=True))
-    dataset_test = PO3_dataset.PO3Dataset_Training(paths, PO3_dataset.get_transform(train=False))
+    dataset = PO3_dataset.PO3Dataset(paths, PO3_dataset.get_transform(train=True))
+    dataset_test = PO3_dataset.PO3Dataset(paths, PO3_dataset.get_transform(train=False))
 
     # split the dataset in train and test set randomly
     indices = torch.randperm(len(dataset)).tolist()
