@@ -77,14 +77,15 @@ class Tracker():
             dictionary containing person id : [x,y,z] key-value pairs
         """
         self.positions = dict()
-        updated_already = False
+        # updated_already = False
         # loop through all tracked people
         for person in self.persons:
 
-            # update sampling time if necessary
-            if dt is not None and not updated_already:
-                person.kf.update_dt(dt)
-                updated_already = True
+            # NOT  NECESSARY IN VIDEO MODE, IS NECESSARY WITH LIVE FEED WITH VARIABLE FRAMERATE!
+            # # update sampling time if necessary
+            # if dt is not None and not updated_already:
+            #     person.kf.update_dt(dt)
+            #     updated_already = True
                 
             # predict next position
             person.predict()

@@ -83,10 +83,10 @@ class VideoPeopleMonitor:
                 elif event[1] == "Enter":
                     if event[2] == "R":
                         self.tracker.add_person(
-                            event[0], [[4], [4.5], [1.3], [0], [0], [0]])
+                            event[0], np.array([[4], [4.5], [1.3], [0], [0], [0]]))
                     elif event[2] == "L":
                         self.tracker.add_person(
-                            event[0], [[0], [5], [1.3], [0], [0], [0]])
+                            event[0], np.array([[0], [5], [1.3], [0], [0], [0]]))
             # make tracker prediction
             prediction = self.tracker.predict(self.dt)
 
@@ -102,6 +102,8 @@ class VideoPeopleMonitor:
             # detect points
             dets = self.positioner.get_XYZ(coordinates_1, coordinates_2, prediction)
             # update filter
+            if dets:
+                print("debug")
             tracked_points = self.tracker.update(dets)
 
             data_dict = {}

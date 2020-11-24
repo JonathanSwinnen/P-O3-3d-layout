@@ -229,14 +229,14 @@ class Positioner:
 
                 pt = np.array(self.get_single_3d_point(point_camera_1, point_camera_2))
                 in_room = np.greater(pt, self.room_dim[0]).all() and np.less(pt, self.room_dim[1]).all()
-                print("IN ROOM : ", str(in_room))
-                print("Projection error:", (len(possible_pairings)-1, i), cost, sep=",")
+                #print("IN ROOM : ", str(in_room))
+                #print("Projection error:", (len(possible_pairings)-1, i), cost, sep=",")
                 if cost <= self.pairing_range and in_room:
                     possible_pairings[-1].append(i)
 
                 i += 1
 
-        print("pairing options:", possible_pairings)
+        #print("pairing options:", possible_pairings)
 
         # get best point combinations and retrieve 3D points
         _, best_dets = self.get_best_dets_recursively(
@@ -295,7 +295,7 @@ class Positioner:
             )
             # get cost from 3D points
             cost = self.get_mean_dets_vs_prediction_cost(dets, predictions)
-            print("cost from pairing, ", chosen_pairings, cost, sep=",")
+            #print("cost from pairing, ", chosen_pairings, cost, sep=",")
             point_skips_penalty = (len(predictions) - len(chosen_pairings)) * self.ignored_point_penalty
             if cost is not None:
                 cost += point_skips_penalty

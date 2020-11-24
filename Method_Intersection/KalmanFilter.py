@@ -38,8 +38,8 @@ class KalmanFilter(object):
         self.dt = dt
 
         # Define last position, second last position:
-        self.v_last_est = 0*np.ones((3,1))
-        self.v_second_to_last_est = 0*np.ones((3,1))
+        self.v_last = 0*np.ones((3,1))
+        self.v_second_to_last = 0*np.ones((3,1))
         self.last = x0[0:3]
         self.second_to_last = x0[0:3]
 
@@ -84,6 +84,7 @@ class KalmanFilter(object):
         # Initial Covariance Matrix
         self.P = np.eye(self.A.shape[1]).astype(float)
 
+
     def update_dt(self, dt):
         """Updates the Kalman matrices A, B, Q with a new sampling rate
 
@@ -120,7 +121,7 @@ class KalmanFilter(object):
             ).astype(float)
         )
 
-    def predict(self):
+    def predict(self, confidence):
         """Predicts next X,Y,Z coordinates
 
         Returns
@@ -132,6 +133,12 @@ class KalmanFilter(object):
 
         # Update time state
         # x_k =Ax_(k-1) + Bu_(k-1)     Eq.(9)
+        # estimate the acceleration:
+        # self.u = (self.v_last - self.v_second_to_last)/self.dt
+        # self.u *= confidence / 10
+        # if np.linalg.norm(self.u) > 1.5:
+        #     self.u = self.u / np.linalg.norm(self.u) * 1.5
+        # print("self.u is:_________ ", self.u)
         self.x = np.dot(self.A, self.x) + np.dot(self.B, self.u)
 
         # Calculate error covariance
@@ -166,4 +173,10 @@ class KalmanFilter(object):
 
         # Update error covariance matrix
         self.P = (I - (K * self.H)) * self.P  # Eq.(13)
+
+        # update the memory of the last positions and speeds:
+        self.v_second_to_last = (self.last - self.second_to_last)/self.dt
+        self.v_last = (self.x[0:3] - self.last)/self.dt
+        self.second_to_last = self.last
+        self.last = self.x[0:3]
         return self.x[0:3]
