@@ -1,5 +1,5 @@
 import Calibration
-from Detector import Detector
+from Detector_new import Detector
 from Positioner import *
 from Tracker import Tracker
 from time import perf_counter

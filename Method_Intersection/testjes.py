@@ -65,8 +65,8 @@ while True:
     print("\nFRAME\n")
     cv2.imshow("Camera one...", frame_1)
     cv2.imshow("Camera two...", frame_2)
-    cv2.waitKey()
-    # cv2.waitKey(1)
+    #cv2.waitKey()
+    cv2.waitKey(1)
     print("data:", data)
     print()
     

@@ -12,9 +12,6 @@ Hoofdherkenning/adjusted_data/
 Hoofdherkenning/videos/
 # Hoofdherkenning/saved_models/
 
-# ALLOW!
-!Method_Intersection/model/training_23.pth
-
 ### Python template
 # Byte-compiled / optimized / DLL files
 __pycache__/

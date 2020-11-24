@@ -1,7 +1,7 @@
 import torch
 import torchvision
 from PIL import Image
-import transforms as T
+import helper_code.transforms as T
 import cv2 as cv
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 import time
@@ -20,7 +20,7 @@ class Detector:
     Custom class for implementing self trained model.
     """
 
-    def __init__(self, path_model="./saved_models/PO3_v3/training_23.pth"):
+    def __init__(self, path_model="./model/training_23.pth"):
         # define device (gpu/cpu)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print('Evaluate on GPU.') if torch.cuda.is_available() else print('No GPU available, evaluating on CPU.')
@@ -65,9 +65,9 @@ class Detector:
                                        output_L["scores"].tolist(),
                                        output_L["labels"].tolist())
 
-        boxes_R, scores_R, labels_R = (floor_lists(output_L["boxes"].tolist()),
-                                       output_L["scores"].tolist(),
-                                       output_L["labels"].tolist())
+        boxes_R, scores_R, labels_R = (floor_lists(output_R["boxes"].tolist()),
+                                       output_R["scores"].tolist(),
+                                       output_R["labels"].tolist())
 
         # filter based on score
         good_boxes_L, good_labels_L, co_L, good_boxes_R, good_labels_R, co_R = [], [], [], [], [], []
@@ -76,13 +76,13 @@ class Detector:
                 good_boxes_L.append(boxes_L[i])
                 good_labels_L.append(labels_L[i])
                 co_L.append(((boxes_L[i][0] + boxes_L[i][2])//2,
-                            (boxes_L[i][1] + boxes_L[i][3])//2))
+                             (boxes_L[i][1] + boxes_L[i][3])//2))
 
         for i, score in enumerate(scores_R):
             if score > min_score:
                 good_boxes_R.append(boxes_R[i])
                 good_labels_R.append(labels_R[i])
                 co_R.append(((boxes_R[i][0] + boxes_R[i][2])//2,
-                            (boxes_R[i][1] + boxes_R[i][3])//2))
-
+                             (boxes_R[i][1] + boxes_R[i][3])//2))
+        print(co_L, co_R, good_boxes_L, good_boxes_R)
         return co_L, co_R, good_boxes_L, good_boxes_R

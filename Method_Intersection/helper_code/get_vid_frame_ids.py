@@ -1,6 +1,6 @@
 """
 
-This is a helper code file that can be used to manually create timestamp files for person entry/exits from the room
+This is a helper_code file that can be used to manually create timestamp files for person entry/exits from the room
 
 Normally our plan would be to track who is coming in/out of the room by requiring a card scan before entry or exit, 
 and by sending this data back to the tracker. However, since the Covid pandemic we cannot work in a physical room anymore 
