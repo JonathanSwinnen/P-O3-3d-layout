@@ -3,11 +3,14 @@ import torch
 from PIL import Image
 import PO3_dataset
 from math import floor
-import numpy as np
-from math import floor
 import time
+import multiprocessing
+from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+# device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 if torch.cuda.is_available():
     print('Evaluate on GPU.')
 else:
@@ -39,6 +42,7 @@ def iou(box1, box2):
     iou_ar = calc_area(iou_b)
     return iou_ar / min(calc_area(box1), calc_area(box2))
 
+
 def get_bboxes(img):
     img = Image.fromarray(img).convert("RGB")
     img, _ = transform(img, {})
@@ -49,17 +53,21 @@ def get_bboxes(img):
     outputs = [{k: v.to(torch.device("cpu")) for k, v in t.items()} for t in outputs]
     return outputs[0]
 
+
 print("extracting frames")
-cap = cv.VideoCapture('./videos/output_TAFELS_1.avi')
+cap = cv.VideoCapture('./videos/output_TA_1.avi')
 imgs = []
 frame_count = int(cap.get(cv.CAP_PROP_FRAME_COUNT))
 i = 0
 perc = 10
 
+begintime=time.time()
+total_frames = 50
+
 cv.namedWindow("Results")
 while cap.isOpened():
     ret, frame = cap.read()
-    if not ret:
+    if not ret or i == total_frames:
         print('extracting frames finished')
         break
 
@@ -84,4 +92,5 @@ while cap.isOpened():
         perc += 10
     i += 1
 
+print((time.time()-begintime)/total_frames)
 
