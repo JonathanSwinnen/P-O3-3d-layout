@@ -15,6 +15,22 @@ def floor_lists(boxes):
     return result
 
 
+def calc_area(box):
+    return (box[2]-box[0])*(box[3]-box[1])
+
+
+
+def iou(box1, box2):
+    iou_b = [max(box1[0], box2[0]),
+           max(box1[1], box2[1]),
+           min(box1[2], box2[2]),
+           min(box1[3], box2[3])]
+    if iou_b[2]<iou_b[0] or iou_b[3]<iou_b[1]:
+        return 0
+    iou_ar = calc_area(iou_b)
+    return iou_ar / min(calc_area(box1), calc_area(box2))
+
+
 class Detector:
     """
     Custom class for implementing self trained model.
@@ -41,11 +57,9 @@ class Detector:
         torch.no_grad()
 
         # define transformation
-        transforms = []
-        transforms.append(T.ToTensor())
-        self.transform = T.Compose(transforms)
+        self.transform = T.Compose([T.ToTensor()])
 
-    def detect_both_frames(self, left_frame, right_frame, min_score=0.9, filter_bad=True):
+    def detect_both_frames(self, left_frame, right_frame, min_score=0.9, filter_doubles=True):
         # convert images to right format
         img_L = Image.fromarray(left_frame).convert("RGB")
         img_R = Image.fromarray(right_frame).convert("RGB")
@@ -73,16 +87,37 @@ class Detector:
         good_boxes_L, good_labels_L, co_L, good_boxes_R, good_labels_R, co_R = [], [], [], [], [], []
         for i, score in enumerate(scores_L):
             if score > min_score:
-                good_boxes_L.append(boxes_L[i])
-                good_labels_L.append(labels_L[i])
-                co_L.append(((boxes_L[i][0] + boxes_L[i][2])//2,
-                             (boxes_L[i][1] + boxes_L[i][3])//2))
+                add_im = True
+                if filter_doubles:  # filter overlapping boxes
+                    for j in range(len(good_boxes_L)):
+                        if iou(boxes_L[i], good_boxes_L[j]) > 0.8:
+                            if calc_area(boxes_L[i]) < calc_area(good_boxes_L[j]):
+                                del good_boxes_L[j]
+                            else:
+                                add_im = False
+                                break
+                if add_im:
+                    good_boxes_L.append(boxes_L[i])
+                    good_labels_L.append(labels_L[i])
+                    co_L.append(((boxes_L[i][0] + boxes_L[i][2])//2,
+                                 (boxes_L[i][1] + boxes_L[i][3])//2))
 
         for i, score in enumerate(scores_R):
             if score > min_score:
-                good_boxes_R.append(boxes_R[i])
-                good_labels_R.append(labels_R[i])
-                co_R.append(((boxes_R[i][0] + boxes_R[i][2])//2,
-                             (boxes_R[i][1] + boxes_R[i][3])//2))
-        print(co_L, co_R, good_boxes_L, good_boxes_R)
+                add_im = True
+                if filter_doubles:  # filter overlapping boxes
+                    for j in range(len(good_boxes_R)):
+                        # if overlapping for > 80%, only add the smallest box
+                        if iou(boxes_R[i], good_boxes_R[j]) > 0.8:
+                            if calc_area(boxes_R[i]) < calc_area(good_boxes_R[j]):
+                                del good_boxes_R[j]
+                            else:
+                                add_im = False
+                                break
+                if add_im:
+                    good_boxes_R.append(boxes_R[i])
+                    good_labels_R.append(labels_R[i])
+                    co_R.append(((boxes_R[i][0] + boxes_R[i][2])//2,
+                                 (boxes_R[i][1] + boxes_R[i][3])//2))
+
         return co_L, co_R, good_boxes_L, good_boxes_R
