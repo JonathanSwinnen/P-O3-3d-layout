@@ -222,7 +222,7 @@ class Positioner:
                     point_camera_1, point_camera_2, 0
                 )  # TODO: implement
 
-                cost = (
+                error = (
                     d1 * d1 + d2 * d2
                 )  # define the cost as the sum of squared distances to the projected lines
                 # points that give a cost below the threshold are possible pairs
@@ -230,13 +230,22 @@ class Positioner:
                 pt = np.array(self.get_single_3d_point(point_camera_1, point_camera_2))
                 in_room = np.greater(pt, self.room_dim[0]).all() and np.less(pt, self.room_dim[1]).all()
                 #print("IN ROOM : ", str(in_room))
-                #print("Projection error:", (len(possible_pairings)-1, i), cost, sep=",")
-                if cost <= self.pairing_range and in_room:
-                    possible_pairings[-1].append(i)
-
+                print("Projection error:", (len(possible_pairings)-1, i), error, sep=",")
+                if error <= self.pairing_range and in_room:
+                    possible_pairings[-1].append((i, error))
                 i += 1
+            print("unfiltered pairings: ", list(map(lambda p: p[0], possible_pairings[-1])))
+            possible_pairings[-1] = sorted(possible_pairings[-1], key=lambda p: p[1])
+            k = 0
+            while k < len(possible_pairings[-1]) and possible_pairings[-1][k][1] < 100*possible_pairings[-1][0][1]:
+                k += 1
+            possible_pairings[-1] = list(map(lambda p: p[0], possible_pairings[-1][0:k]))
+            print("filtered pairings: ", possible_pairings[-1])
 
-        #print("pairing options:", possible_pairings)
+
+
+
+        print("pairing options:", possible_pairings)
 
         # get best point combinations and retrieve 3D points
         _, best_dets = self.get_best_dets_recursively(
@@ -295,10 +304,10 @@ class Positioner:
             )
             # get cost from 3D points
             cost = self.get_mean_dets_vs_prediction_cost(dets, predictions)
-            #print("cost from pairing, ", chosen_pairings, cost, sep=",")
             point_skips_penalty = (len(predictions) - len(chosen_pairings)) * self.ignored_point_penalty
             if cost is not None:
                 cost += point_skips_penalty
+            print("cost from pairing ", chosen_pairings, cost, sep=",")
             return cost, dets
         # loop over all pairing possibilities i for current index of points_camera_1 to get minimum cost
         min_cost = None
@@ -381,7 +390,7 @@ class Positioner:
             # loop over all detections
             for det_pos in dets:
                 # add cost matrix entry: distance between prediction point and detection point
-                cost_matrix[i][j] = np.linalg.norm(np.array(prediction_pos) - np.array([det_pos]).T) * predictions[pred_id][1]
+                cost_matrix[i][j] = np.linalg.norm(np.array(prediction_pos) - np.array([det_pos]).T) * predictions[pred_id][1] + self.ignored_point_penalty * (1-predictions[pred_id][1])
                 j += 1
             i += 1
         # compute Hungarian algorithm
@@ -394,7 +403,7 @@ class Positioner:
             if p_num < len(predictions) and det_num < len(dets):
                 # add match cost to total
                 cost += cost_matrix[p_num][det_num]
-        cost /= len(indices)
+        cost /= len(predictions)
         return cost
 
 

@@ -13,12 +13,11 @@ timestamps_path = os.path.join(
 calib_path = os.path.join(dirname, "data/calib.pckl")
 
 vm = VideoPeopleMonitor(calib_path, vid_path_2, vid_path_1, timestamps_path)
-cv2.namedWindow("Camera one...")
-cv2.namedWindow("Camera two...")
+cv2.namedWindow("Camera one...",cv2.WINDOW_NORMAL)
+cv2.namedWindow("Camera two...",cv2.WINDOW_NORMAL)
 COLOR = {"Daan":(95, 168, 199),"Jonathan":(99, 199, 99),"Mathias":(242, 162, 104)}
 
 while True:
-    # cv2.waitKey()
     print("\nFRAME\n")
     frame_1, frame_2, _ = vm.get_frames()
     data, boxes = vm.update()
@@ -44,7 +43,7 @@ while True:
         cv2.putText(
             frame_1,
             str(i),
-            (box[0], box[1]),
+            (box[0] + 5, box[1]+ 20),
             cv2.FONT_HERSHEY_COMPLEX_SMALL,
             1,
             255,
@@ -55,7 +54,7 @@ while True:
         cv2.putText(
             frame_2,
             str(i),
-            (box[0], box[1]),
+            (box[0]+5, box[1]+20),
             cv2.FONT_HERSHEY_COMPLEX_SMALL,
             1,
             255,
@@ -63,10 +62,11 @@ while True:
         cv2.rectangle(frame_2, (box[0], box[1]), (box[2], box[3]), (199, 199, 199),1)
         i += 1
     # cv2.waitKey()
-    # print("\nFRAME\n")
+    print("\nFRAME\n")
     cv2.imshow("Camera one...", frame_1)
     cv2.imshow("Camera two...", frame_2)
-    cv2.waitKey(1)
+    cv2.waitKey()
+    # cv2.waitKey(1)
     print("data:", data)
     print()
     

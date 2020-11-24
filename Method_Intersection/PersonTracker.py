@@ -56,8 +56,8 @@ class KalmanPersonTracker:
         # work with logaritmic decent maybe?
         # self.confidence -= self.confidence_fall
         self.frames_not_detected += 1
-        self.frames_not_detected = min(10,self.frames_not_detected)
-        self.confidence = 0.75*log(3.7936678946832 - 0.2793667894683*self.frames_not_detected)
+        # self.confidence = 0.75*log(3.7936678946832 - 0.2793667894683*self.frames_not_detected)
+        self.confidence -= self.confidence_fall
         self.confidence = max(self.confidence, 0)
         print("REDUCE confidence:",self.id,",",self.confidence)
         self.pos = self.kf.predict(self.confidence)
@@ -78,17 +78,15 @@ class KalmanPersonTracker:
         """
         if z != []:
             z_vect = np.array([z]).T
-            #print("update " + self.id + "with val: " + str(z), "diff:" + str(z_vect - self.previous_updated_pos) + "")
+            print("update " + self.id + "with val: " + str(z), "diff:" + str(z_vect - self.previous_updated_pos) + "")
             spd = np.linalg.norm(z_vect - self.previous_updated_pos) / self.dt
             print("SPEED:", self.id, spd,",", self.confidence)
             #if spd * self.confidence < self.max_certain_speed:
-            if spd * ( 1 - min(0.9, self.frames_not_detected/10)) < self.max_certain_speed:
+            if spd * ( 1 - min(0.9, (self.frames_not_detected-1) /10)) < self.max_certain_speed:
                 self.frames_not_detected = 0
                 self.pos = self.kf.update(z_vect)
                 self.confidence += self.confidence_growth
                 self.confidence = min(self.confidence, 1)
-                print("ADD confidence:",self.id,self.confidence,sep=",")
-
                 self.previous_updated_pos = self.pos
             else:
                 print("UPDATE REJECTED: misdetection or sudden jump?")

@@ -33,7 +33,7 @@ class VideoPeopleMonitor:
         u = 0 * np.ones((3, 1))
         stac = 0.95
         stdm = np.array([[0.1], [0.1], [0.9]])
-        self.tracker = Tracker(u, stac, stdm, 0.1, 4, 0.3, 0.1)
+        self.tracker = Tracker(u, stac, stdm, 0.1, 6, 0.3, 0.1)
 
         self.positioner = Positioner(
             self.calibrated_values, 0.002, 0.2, ([-1, 0, 0], [6, 7, 3])
@@ -77,6 +77,7 @@ class VideoPeopleMonitor:
             self.has_captured_frame = False
             #   checks the timestamps file and adds/removes a person if necessary
             event = self.timestamps.get(self.frame_count, None)
+            print("current frame count:", self.frame_count)
             if event is not None:
                 if event[1] == "Exit":
                     self.tracker.rm_person(event[0])
