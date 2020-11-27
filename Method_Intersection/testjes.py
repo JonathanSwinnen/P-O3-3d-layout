@@ -5,20 +5,22 @@ import os
 
 # bestand locaties
 dirname = os.path.dirname(__file__)
-vid_path_1 = os.path.join(dirname, "data/videos/output_two_person_0.avi")
-vid_path_2 = os.path.join(dirname, "data/videos/output_two_person_1.avi")
+vid_path_1 = os.path.join(dirname, "data/videos/output_more_person_0.avi")
+vid_path_2 = os.path.join(dirname, "data/videos/output_more_person_1.avi")
 timestamps_path = os.path.join(
-    dirname, "data/timestamps/output_two_person_timestamps.txt"
+    dirname, "data/timestamps/meerdere_pers.txt"
 )
 calib_path = os.path.join(dirname, "data/calib.pckl")
+boxes_path = os.path.join(dirname, "data/video_data/meerdere_pers.pckl")
 
-vm = VideoPeopleMonitor(calib_path, vid_path_2, vid_path_1, timestamps_path)
+vm = VideoPeopleMonitor(calib_path, vid_path_2, vid_path_1, timestamps_path, boxes_path)
 cv2.namedWindow("Camera one...",cv2.WINDOW_NORMAL)
 cv2.namedWindow("Camera two...",cv2.WINDOW_NORMAL)
-COLOR = {"Daan":(95, 168, 199),"Jonathan":(99, 199, 99),"Mathias":(242, 162, 104)}
+COLOR = {"Daan":(95, 168, 199),"Jonathan":(99, 199, 99),"Mathias P.":(242, 162, 104), "Mathias S.":(100,200,49), "Ebert":(60,200,100), "Miel":(43,0,30)}
 
 while True:
-    print("\nFRAME\n")
+    print("\nFRAME " + str(vm.frame_count) + "\n")
+    #cv2.waitKey()
     frame_1, frame_2, _ = vm.get_frames()
     data, boxes = vm.update()
 

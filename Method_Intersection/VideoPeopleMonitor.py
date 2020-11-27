@@ -1,8 +1,10 @@
 import Calibration
-from Detector_new import Detector
+from DetectorPrerecorded import DetectorPrerec
+#from Detector_new import Detector
 from Positioner import *
 from Tracker import Tracker
 from time import perf_counter
+from DetectorPrerecorded import DetectorPrerec
 import os
 import cv2
 import matplotlib.pyplot as plt
@@ -11,7 +13,7 @@ import numpy as np
 
 
 class VideoPeopleMonitor:
-    def __init__(self, calib_path, vid_path_1, vid_path_2, person_timestamps_path):
+    def __init__(self, calib_path, vid_path_1, vid_path_2, person_timestamps_path, vid_data_path):
 
         f = open(person_timestamps_path, "r")
         lines = f.read().split("\n")
@@ -27,23 +29,24 @@ class VideoPeopleMonitor:
         self.calibrated_values = Calibration.load_calibration(calib_path)
         self.image_size = self.calibrated_values["image_size"]
 
-        self.detector = Detector()
+        #self.detector = Detector()
+        self.detector = DetectorPrerec(vid_data_path)
 
         #   Initialize the tracker with appropriate values:
         u = 0 * np.ones((3, 1))
         stac = 0.95
-        stdm = np.array([[0.1], [0.1], [0.9]])
-        self.tracker = Tracker(u, stac, stdm, 0.1, 6, 0.3, 0.1)
+        stdm = np.array([[0.1], [0.1], [0.3]])
+        self.tracker = Tracker(u, stac, stdm, 0.1, 5, 0.4, 0.1)
 
         self.positioner = Positioner(
-            self.calibrated_values, 0.002, 0.2, ([-1, 0, 0], [6, 7, 3])
+            self.calibrated_values, 0.0015, 0.2, ([-1, 0, 0], [6, 7, 3])
         )
 
         self.frame_1 = None
         self.frame_2 = None
         self.has_captured_frame = False
 
-        self.frame_count = 1890
+        self.frame_count = -1
         self.camera_1.set(cv2.CAP_PROP_POS_FRAMES,self.frame_count)
         self.camera_2.set(cv2.CAP_PROP_POS_FRAMES,self.frame_count)
 
@@ -84,10 +87,10 @@ class VideoPeopleMonitor:
                 elif event[1] == "Enter":
                     if event[2] == "R":
                         self.tracker.add_person(
-                            event[0], np.array([[4], [4.5], [1.3], [0], [0], [0]]))
+                            event[0], np.array([[4], [4.5], [1.6], [0], [0], [0]]))
                     elif event[2] == "L":
                         self.tracker.add_person(
-                            event[0], np.array([[0], [5], [1.3], [0], [0], [0]]))
+                            event[0], np.array([[0], [5], [1.6], [0], [0], [0]]))
             # make tracker prediction
             prediction = self.tracker.predict(self.dt)
 
@@ -96,8 +99,8 @@ class VideoPeopleMonitor:
                 coordinates_1,
                 coordinates_2,
                 boxes_1,
-                boxes_2,
-            ) = self.detector.detect_both_frames(self.frame_1, self.frame_2)
+                boxes_2, ) = self.detector.detect_bot_frames(self.frame_count)
+            # ) = self.detector.detect_both_frames(self.frame_1, self.frame_2)
 
             # this frame needs to be saved and calculated!
             # detect points

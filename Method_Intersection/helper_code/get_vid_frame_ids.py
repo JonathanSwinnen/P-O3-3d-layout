@@ -23,8 +23,8 @@ import os
 import cv2
 import numpy as np
 
-vid_1_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'data', 'videos', 'output_two_person_0.avi'))
-vid_2_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'data', 'videos', 'output_two_person_1.avi'))
+vid_1_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'data', 'videos', 'output_more_person_0.avi'))
+vid_2_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'data', 'videos', 'output_more_person_1.avi'))
 
 cam1 = cv2.VideoCapture(vid_1_path)
 cam2 = cv2.VideoCapture(vid_2_path)

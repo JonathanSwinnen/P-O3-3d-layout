@@ -6,6 +6,8 @@ from munkres import Munkres
 import numpy as np
 import munkres
 from numpy.lib.type_check import imag
+import time
+from lapsolver import solve_dense
 
 
 class Positioner:
@@ -36,6 +38,7 @@ class Positioner:
                 self.calibration_values["image_size"][1] / 2,
             ]
         )
+        self.calc_data = [dict(),dict()]
 
     # TODO: Implement 3D formules
 
@@ -145,11 +148,12 @@ class Positioner:
         # loop over all pairs
         for pair in pairings:
             # add 3D point calculated from pair of 2D projected points
-            dets.append(
-                self.get_single_3d_point(
-                    points_camera_1[pair[0]], points_camera_2[pair[1]]
-                )
-            )
+            if pair in self.calc_data[0]:
+                pt = self.calc_data[0][pair]
+            else:
+                pt = self.get_single_3d_point(points_camera_1[pair[0]], points_camera_2[pair[1]])
+                self.calc_data[0][pair] = pt
+            dets.append(pt)
         return dets
 
     def get_d(self, point_1, point_2, target_camera):
@@ -206,6 +210,8 @@ class Positioner:
             a list containing the best estimation of detected 3D points
         """
 
+        self.calc_data = [dict(), dict()]
+
         possible_pairings = []
 
         # loop over all points and build a list that for every index corresponding to a point in points_camera_1
@@ -230,22 +236,19 @@ class Positioner:
                 pt = np.array(self.get_single_3d_point(point_camera_1, point_camera_2))
                 in_room = np.greater(pt, self.room_dim[0]).all() and np.less(pt, self.room_dim[1]).all()
                 #print("IN ROOM : ", str(in_room))
-                print("Projection error:", (len(possible_pairings)-1, i), error, sep=",")
+                #print("Projection error:", (len(possible_pairings)-1, i), error, sep=",")
                 if error <= self.pairing_range and in_room:
                     possible_pairings[-1].append((i, error))
                 i += 1
-            print("unfiltered pairings: ", list(map(lambda p: p[0], possible_pairings[-1])))
+            #print("unfiltered pairings: ", list(map(lambda p: p[0], possible_pairings[-1])))
             possible_pairings[-1] = sorted(possible_pairings[-1], key=lambda p: p[1])
             k = 0
-            while k < len(possible_pairings[-1]) and possible_pairings[-1][k][1] < 100*possible_pairings[-1][0][1]:
+            while k < len(possible_pairings[-1]) and (possible_pairings[-1][k][1] < 10e-3 or possible_pairings[-1][k][1] < 50*possible_pairings[-1][0][1]):
                 k += 1
             possible_pairings[-1] = list(map(lambda p: p[0], possible_pairings[-1][0:k]))
-            print("filtered pairings: ", possible_pairings[-1])
+            #print("filtered pairings: ", possible_pairings[-1])
 
-
-
-
-        print("pairing options:", possible_pairings)
+        #print("pairing options:", possible_pairings)
 
         # get best point combinations and retrieve 3D points
         _, best_dets = self.get_best_dets_recursively(
@@ -303,11 +306,12 @@ class Positioner:
                 points_camera_1, points_camera_2, chosen_pairings
             )
             # get cost from 3D points
-            cost = self.get_mean_dets_vs_prediction_cost(dets, predictions)
-            point_skips_penalty = (len(predictions) - len(chosen_pairings)) * self.ignored_point_penalty
+            cost = self.get_mean_dets_vs_prediction_cost(dets, chosen_pairings, predictions)
+            cost /= len(predictions)
+            point_skips_penalty = (len(predictions) - len(chosen_pairings)) * self.ignored_point_penalty / len(predictions)
             if cost is not None:
                 cost += point_skips_penalty
-            print("cost from pairing ", chosen_pairings, cost, sep=",")
+            #print("cost from pairing ", chosen_pairings, cost, sep=",")
             return cost, dets
         # loop over all pairing possibilities i for current index of points_camera_1 to get minimum cost
         min_cost = None
@@ -327,6 +331,7 @@ class Positioner:
         if cost is not None and (min_cost is None or cost < min_cost):
             min_cost = cost
             best_dets = dets
+        
 
         # do choose one from the list
         for i in pairings_to_choose[current_pairing_index_1]:
@@ -356,7 +361,7 @@ class Positioner:
         # return dets from best pairing sequence
         return min_cost, best_dets
 
-    def get_mean_dets_vs_prediction_cost(self, dets, predictions):
+    def get_mean_dets_vs_prediction_cost(self, dets, pairs, predictions):
         """returns the minimal mean cost of the distance between a given list of detected 3D points and a prediction
         through the hungarian method.
 
@@ -375,9 +380,6 @@ class Positioner:
         if len(dets) == 0 or len(predictions) == 0:
             return None
 
-        # implementation of Hungarian method
-        m = Munkres()
-
         # i = person index, j = det index
         i, j = 0, 0
         # create cost matrix
@@ -390,12 +392,19 @@ class Positioner:
             # loop over all detections
             for det_pos in dets:
                 # add cost matrix entry: distance between prediction point and detection point
-                cost_matrix[i][j] = np.linalg.norm(np.array(prediction_pos) - np.array([det_pos]).T) * predictions[pred_id][1] + self.ignored_point_penalty * (1-predictions[pred_id][1])
+                key = (pairs[j], i)
+                if key in self.calc_data[1]:
+                    cost_matrix[i][j] = self.calc_data[1][key]
+                else:
+                    dist = np.linalg.norm(np.array(prediction_pos) - np.array([det_pos]).T) * predictions[pred_id][1] + self.ignored_point_penalty * (1-predictions[pred_id][1])
+                    self.calc_data[1][key] = dist
+                    cost_matrix[i][j] = dist
                 j += 1
             i += 1
         # compute Hungarian algorithm
-        
-        indices = m.compute(np.copy(cost_matrix))
+        r, c = solve_dense(cost_matrix)
+
+        indices = zip(r,c)
         # calculate final cost
         cost = 0
         # loop over all best matches
@@ -403,7 +412,8 @@ class Positioner:
             if p_num < len(predictions) and det_num < len(dets):
                 # add match cost to total
                 cost += cost_matrix[p_num][det_num]
-        cost /= len(predictions)
+        cost
+
         return cost
 
 

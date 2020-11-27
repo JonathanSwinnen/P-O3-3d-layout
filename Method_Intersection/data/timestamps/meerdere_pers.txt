@@ -1,0 +1,9 @@
+90,Daan,Enter,R
+130,Ebert,Enter,L
+170,Jonathan,Enter,R
+240,Mathias S.,Enter,R
+333,Mathias P.,Enter,R
+387,Miel,Enter,R
+426,Daan,Exit,R
+486,Mathias S.,Exit,L
+540,Daan,Enter,R
