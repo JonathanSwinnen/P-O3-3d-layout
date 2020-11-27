@@ -6,6 +6,7 @@ import cv2 as cv
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 import time
 from math import floor
+import pickle
 
 
 def floor_lists(boxes):
@@ -20,7 +21,7 @@ def calc_area(box):
 
 
 
-def iou(box1, box2):
+def adjusted_iou(box1, box2):
     iou_b = [max(box1[0], box2[0]),
            max(box1[1], box2[1]),
            min(box1[2], box2[2]),
@@ -36,7 +37,7 @@ class Detector:
     Custom class for implementing self trained model.
     """
 
-    def __init__(self, path_model="./model/training_23.pth"):
+    def __init__(self, path_model="./data/model/training_23.pth"):
         # define device (gpu/cpu)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print('Evaluate on GPU.') if torch.cuda.is_available() else print('No GPU available, evaluating on CPU.')
@@ -90,7 +91,7 @@ class Detector:
                 add_im = True
                 if filter_doubles:  # filter overlapping boxes
                     for j in range(len(good_boxes_L)):
-                        if iou(boxes_L[i], good_boxes_L[j]) > 0.8:
+                        if adjusted_iou(boxes_L[i], good_boxes_L[j]) > 0.8:
                             if calc_area(boxes_L[i]) < calc_area(good_boxes_L[j]):
                                 del good_boxes_L[j]
                             else:
@@ -108,7 +109,7 @@ class Detector:
                 if filter_doubles:  # filter overlapping boxes
                     for j in range(len(good_boxes_R)):
                         # if overlapping for > 80%, only add the smallest box
-                        if iou(boxes_R[i], good_boxes_R[j]) > 0.8:
+                        if adjusted_iou(boxes_R[i], good_boxes_R[j]) > 0.8:
                             if calc_area(boxes_R[i]) < calc_area(good_boxes_R[j]):
                                 del good_boxes_R[j]
                             else:
@@ -121,3 +122,45 @@ class Detector:
                                  (boxes_R[i][1] + boxes_R[i][3])//2))
 
         return co_L, co_R, good_boxes_L, good_boxes_R
+
+
+if __name__ == "__main__":
+    cap_1 = cv.VideoCapture('./data/videos/output_one_person_1.avi')
+    cap_2 = cv.VideoCapture('./data/videos/output_one_person_0.avi')
+
+    detector = Detector()
+
+    all_info = []
+    total_frames = int(cap_1.get(cv.CAP_PROP_FRAME_COUNT))
+    print("Frames:", total_frames)
+    print("Est. time in min:", total_frames*0.57/60)
+
+    start = time.time()
+    i = 0
+    while cap_1.isOpened():
+        ret_1, frame_1 = cap_1.read()
+        if not ret_1:
+            print("failed to grab frame_1")
+            break
+
+        ret_2, frame_2 = cap_2.read()
+        if not ret_2:
+            print("failed to grab frame_2")
+            break
+        frame_1, frame_2 = cv.resize(frame_1, (480, 270)), cv.resize(frame_2, (480, 270))
+        all_info.append(detector.detect_both_frames(frame_1, frame_2))
+        i += 1
+        if i%10 == 0:
+            print(i/total_frames*100)
+    end = time.time()
+    print("Total time:", end-start)
+    print("Total frames:", len(all_info))
+    print("Time/frame:", (end-start)/len(all_info))
+
+    print(all_info)
+    pickle_out = open("data/video_data/one_person.pckl", "wb")
+    pickle.dump(all_info, pickle_out)
+    pickle_out.close()
+
+    cap_1.release()
+    cap_2.release()

@@ -58,7 +58,7 @@ print("extracting frames")
 cap = cv.VideoCapture('./videos/output_TA_1.avi')
 imgs = []
 frame_count = int(cap.get(cv.CAP_PROP_FRAME_COUNT))
-i = 0
+count = 0
 perc = 10
 
 begintime=time.time()
@@ -67,7 +67,7 @@ total_frames = 50
 cv.namedWindow("Results")
 while cap.isOpened():
     ret, frame = cap.read()
-    if not ret or i == total_frames:
+    if not ret:
         print('extracting frames finished')
         break
 
@@ -75,8 +75,45 @@ while cap.isOpened():
     start = time.time()
     output = get_bboxes(frame)
     print("time: ", time.time()-start)
+
     boxes, scores, labels = floor_lists(output['boxes'].tolist()), output['scores'].tolist(), output['labels'].tolist()
     good_boxes, good_labels = [], []
+
+    wait = False
+    # filter based on score
+    for i, score in enumerate(scores):
+        if score > 0.9:
+            add_im = True
+            if True:  # filter overlapping boxes
+                for j in range(len(good_boxes)):
+                    if iou(boxes[i], good_boxes[j]) > 0.8:
+                        if calc_area(boxes[i]) < calc_area(good_boxes[j]):
+                            wait = True
+                            cv.rectangle(frame,
+                                        (    good_boxes[j][0],
+                                             good_boxes[j][1],
+                                             good_boxes[j][2] - good_boxes[j][0],
+                                             good_boxes[j][3] - good_boxes[j][1]
+                                        ),
+                                         color=(255, 0, 0),
+                                         thickness=2)
+                            del good_boxes[j]
+                        else:
+                            cv.rectangle(frame,
+                                         (boxes[i][0],
+                                          boxes[i][1],
+                                          boxes[i][2] - boxes[i][0],
+                                          boxes[i][3] - boxes[i][1]
+                                          ),
+                                         color=(255, 0, 0),
+                                         thickness=2)
+                            wait = True
+                            add_im = False
+                            break
+            if add_im:
+                good_boxes.append(boxes[i])
+                good_labels.append(labels[i])
+
     for i, score in enumerate(scores):
         if score > 0.9 and not any(iou(boxes[i], good_boxes[j]) > 0.8 for j in range(len(good_boxes))):
             good_boxes.append(boxes[i])
@@ -85,12 +122,16 @@ while cap.isOpened():
     for box in good_boxes:
         cv.rectangle(frame, (box[0], box[1], box[2]-box[0], box[3]-box[1]), color=(0, 255, 0), thickness=2)
     cv.imshow("Results", frame)
-    cv.waitKey(1)
+    if wait:
+        print(count)
+        cv.waitKey(1500)
+    else:
+        cv.waitKey(1)
 
-    if perc/100 < i/frame_count:
+    if perc/100 < count/frame_count:
         print(perc, "%")
         perc += 10
-    i += 1
+    count += 1
 
 print((time.time()-begintime)/total_frames)
 
