@@ -104,6 +104,8 @@ class VideoPeopleMonitor:
             # ) = self.detector.detect_both_frames(self.frame_1, self.frame_2)
             coords = (coordinates_1, coordinates_2)
 
+            
+
             # this frame needs to be saved and calculated!
             # detect points
             dets = self.positioner.get_XYZ(coordinates_1, coordinates_2, prediction)

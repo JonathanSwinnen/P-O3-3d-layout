@@ -43,6 +43,8 @@ class KalmanPersonTracker:
 
         self.max_certain_speed = max_certain_speed
 
+        self.has_mask = False
+
 
     def predict(self):
         """Predicts the next position using the kalman filter
@@ -62,7 +64,7 @@ class KalmanPersonTracker:
         self.pos = self.kf.predict(self.confidence)
         return self.pos
 
-    def update(self, z):
+    def update(self, z, mask_detected=False):
         """Updates the kalman filter with a new measurement
 
         Parameters
@@ -88,6 +90,13 @@ class KalmanPersonTracker:
                 self.confidence += self.confidence_growth
                 self.confidence = min(self.confidence, 1)
                 self.previous_updated_pos = self.pos
+
+                # MASKER DETECTIE CODE
+                # self.pos -> lijst [x,y,z]
+                # self.kf.x[3:6] -> [[vx],[vy],[vz]]
+                #
+
+
             else:
                 print("UPDATE REJECTED: misdetection or sudden jump?")
 
