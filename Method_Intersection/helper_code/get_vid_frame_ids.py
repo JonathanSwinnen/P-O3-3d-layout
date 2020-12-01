@@ -35,6 +35,10 @@ n = 0
 cv2.namedWindow("1")
 cv2.namedWindow("2")
 
+frame_count = 80
+cam1.set(cv2.CAP_PROP_POS_FRAMES,frame_count+1)
+cam2.set(cv2.CAP_PROP_POS_FRAMES,frame_count+1)
+
 while True:
     n += 1
 

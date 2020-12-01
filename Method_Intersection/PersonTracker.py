@@ -44,6 +44,7 @@ class KalmanPersonTracker:
         self.max_certain_speed = max_certain_speed
 
         self.has_mask = False
+        
 
 
     def predict(self):

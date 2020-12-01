@@ -119,6 +119,7 @@ class Positioner:
 
         return (solution_4[0][0] * Line_1 + self.calibration_values["coord_1"] + solution_4[0][1] * Line_2 + self.calibration_values["coord_2"])/2
 
+
     def get_single_3d_point(self, point_camera_1, point_camera_2):
         P1 = self.pixel_to_image_plane(point_camera_1, 1)
         P2 = self.pixel_to_image_plane(point_camera_2, 2)

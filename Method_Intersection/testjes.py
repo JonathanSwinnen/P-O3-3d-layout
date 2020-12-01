@@ -6,12 +6,13 @@ import numpy as np
 
 # bestand locaties
 dirname = os.path.dirname(__file__)
+calib_path = os.path.join(dirname, "data/calib.pckl")
+
 vid_path_1 = os.path.join(dirname, "data/videos/output_more_person_0.avi")
 vid_path_2 = os.path.join(dirname, "data/videos/output_more_person_1.avi")
 timestamps_path = os.path.join(
     dirname, "data/timestamps/meerdere_pers.txt"
 )
-calib_path = os.path.join(dirname, "data/calib.pckl")
 boxes_path = os.path.join(dirname, "data/video_data/meerdere_pers.pckl")
 
 vm = VideoPeopleMonitor(calib_path, vid_path_2, vid_path_1, timestamps_path, boxes_path)
