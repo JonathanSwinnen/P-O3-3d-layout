@@ -3,7 +3,26 @@
 170,Jonathan,Enter,R
 240,Mathias S.,Enter,R
 333,Mathias P.,Enter,R
-387,Miel,Enter,R
+375,Miel,Enter,R
 426,Daan,Exit,R
 486,Mathias S.,Exit,L
-540,Daan,Enter,R
+539,Daan,Enter,R
+565,Mathias P.,Exit,L
+586,Daan,Exit,L
+609,Jonathan,Exit,L
+622,Ebert,Exit,R
+640,Mathias P.,Enter,L
+657,Daan,Enter,L
+665,Miel,Exit,R
+712,Mathias S.,Enter,L
+747,Jonathan,Enter,L
+776,Daan,Exit,R
+809,Miel,Enter,R
+830,Ebert,Enter,R
+833,Miel,Exit,L
+914,Daan,Enter,R
+948,Daan,Exit,L
+970,Mathias P.,Exit,R
+980,Ebert,Exit,L
+990,Mathias S.,Exit,R
+1008,Jonathan,Exit,R

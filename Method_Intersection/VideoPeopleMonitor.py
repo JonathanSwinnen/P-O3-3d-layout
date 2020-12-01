@@ -10,6 +10,7 @@ import cv2
 import matplotlib.pyplot as plt
 from math import floor
 import numpy as np
+import copy
 
 
 class VideoPeopleMonitor:
@@ -34,21 +35,21 @@ class VideoPeopleMonitor:
 
         #   Initialize the tracker with appropriate values:
         u = 0 * np.ones((3, 1))
-        stac = 0.95
-        stdm = np.array([[0.1], [0.1], [0.3]])
-        self.tracker = Tracker(u, stac, stdm, 0.1, 5, 0.4, 0.1)
+        stac = 0.8
+        stdm = np.array([[0.1], [0.1], [0.2]])
+        self.tracker = Tracker(u, stac, stdm, 0.1, 4, 0.4, 0.15)
 
         self.positioner = Positioner(
-            self.calibrated_values, 0.0015, 0.2, ([-1, 0, 0], [6, 7, 3])
+            self.calibrated_values, 0.002, 0.2, ([-1, 0, 0], [6, 7, 3])
         )
 
         self.frame_1 = None
         self.frame_2 = None
         self.has_captured_frame = False
 
-        self.frame_count = -1
-        self.camera_1.set(cv2.CAP_PROP_POS_FRAMES,self.frame_count)
-        self.camera_2.set(cv2.CAP_PROP_POS_FRAMES,self.frame_count)
+        self.frame_count = 80
+        self.camera_1.set(cv2.CAP_PROP_POS_FRAMES,self.frame_count+1)
+        self.camera_2.set(cv2.CAP_PROP_POS_FRAMES,self.frame_count+1)
 
         ts_file = open(person_timestamps_path, "r")
         ts_lines = ts_file.read().split("\n")
@@ -87,12 +88,12 @@ class VideoPeopleMonitor:
                 elif event[1] == "Enter":
                     if event[2] == "R":
                         self.tracker.add_person(
-                            event[0], np.array([[4], [4.5], [1.6], [0], [0], [0]]))
+                            event[0], np.array([[4], [4.5], [1.65], [0], [0], [0]]))
                     elif event[2] == "L":
                         self.tracker.add_person(
-                            event[0], np.array([[0], [5], [1.6], [0], [0], [0]]))
+                            event[0], np.array([[-0.25], [5.5], [1.65], [0], [0], [0]]))
             # make tracker prediction
-            prediction = self.tracker.predict(self.dt)
+            prediction = copy.deepcopy(self.tracker.predict(self.dt))
 
             #   recognize every person in every frame:
             (
@@ -101,6 +102,7 @@ class VideoPeopleMonitor:
                 boxes_1,
                 boxes_2, ) = self.detector.detect_bot_frames(self.frame_count)
             # ) = self.detector.detect_both_frames(self.frame_1, self.frame_2)
+            coords = (coordinates_1, coordinates_2)
 
             # this frame needs to be saved and calculated!
             # detect points
@@ -113,6 +115,7 @@ class VideoPeopleMonitor:
             data_dict = {}
 
             for pers in tracked_points:
+                print("repj ", tracked_points[pers][0])
                 point_on_img = self.positioner.reprojectPoint(tracked_points[pers][0])
                 data_dict[pers] = (
                     tracked_points[pers][0],
@@ -120,7 +123,7 @@ class VideoPeopleMonitor:
                     point_on_img[1],
                 )
 
-            return data_dict, (boxes_1, boxes_2)
+            return data_dict, (boxes_1, boxes_2), prediction, dets, coords
 
         else:
             return None

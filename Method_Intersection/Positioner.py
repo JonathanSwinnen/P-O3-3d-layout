@@ -117,7 +117,7 @@ class Positioner:
         b = self.calibration_values["coord_1"] - self.calibration_values["coord_2"]
         solution_4 = np.linalg.lstsq(A, b, rcond=-1)
 
-        return solution_4[0][0] * Line_1 + self.calibration_values["coord_1"]
+        return (solution_4[0][0] * Line_1 + self.calibration_values["coord_1"] + solution_4[0][1] * Line_2 + self.calibration_values["coord_2"])/2
 
     def get_single_3d_point(self, point_camera_1, point_camera_2):
         P1 = self.pixel_to_image_plane(point_camera_1, 1)
@@ -236,19 +236,19 @@ class Positioner:
                 pt = np.array(self.get_single_3d_point(point_camera_1, point_camera_2))
                 in_room = np.greater(pt, self.room_dim[0]).all() and np.less(pt, self.room_dim[1]).all()
                 #print("IN ROOM : ", str(in_room))
-                #print("Projection error:", (len(possible_pairings)-1, i), error, sep=",")
+                print("Projection error:", (len(possible_pairings)-1, i), error, sep=",")
                 if error <= self.pairing_range and in_room:
                     possible_pairings[-1].append((i, error))
                 i += 1
             #print("unfiltered pairings: ", list(map(lambda p: p[0], possible_pairings[-1])))
             possible_pairings[-1] = sorted(possible_pairings[-1], key=lambda p: p[1])
             k = 0
-            while k < len(possible_pairings[-1]) and (possible_pairings[-1][k][1] < 10e-3 or possible_pairings[-1][k][1] < 50*possible_pairings[-1][0][1]):
+            while k < len(possible_pairings[-1]) and (possible_pairings[-1][k][1] < 1e-3 or possible_pairings[-1][k][1] < 100*possible_pairings[-1][0][1]):
                 k += 1
             possible_pairings[-1] = list(map(lambda p: p[0], possible_pairings[-1][0:k]))
             #print("filtered pairings: ", possible_pairings[-1])
 
-        #print("pairing options:", possible_pairings)
+        print("pairing options:", possible_pairings)
 
         # get best point combinations and retrieve 3D points
         _, best_dets = self.get_best_dets_recursively(
@@ -307,11 +307,10 @@ class Positioner:
             )
             # get cost from 3D points
             cost = self.get_mean_dets_vs_prediction_cost(dets, chosen_pairings, predictions)
-            cost /= len(predictions)
-            point_skips_penalty = (len(predictions) - len(chosen_pairings)) * self.ignored_point_penalty / len(predictions)
+            point_skips_penalty = max(0, len(predictions) - len(chosen_pairings)) * self.ignored_point_penalty
             if cost is not None:
                 cost += point_skips_penalty
-            #print("cost from pairing ", chosen_pairings, cost, sep=",")
+            print("cost from pairing ", chosen_pairings, cost, sep=",")
             return cost, dets
         # loop over all pairing possibilities i for current index of points_camera_1 to get minimum cost
         min_cost = None
@@ -332,7 +331,6 @@ class Positioner:
             min_cost = cost
             best_dets = dets
         
-
         # do choose one from the list
         for i in pairings_to_choose[current_pairing_index_1]:
             # new chosen pairings
@@ -401,25 +399,27 @@ class Positioner:
                     cost_matrix[i][j] = dist
                 j += 1
             i += 1
-        # compute Hungarian algorithm
+        # compute linear assignment
         r, c = solve_dense(cost_matrix)
 
         indices = zip(r,c)
         # calculate final cost
         cost = 0
         # loop over all best matches
+        n = 0
         for (p_num, det_num) in indices:
             if p_num < len(predictions) and det_num < len(dets):
                 # add match cost to total
+                n += 1
                 cost += cost_matrix[p_num][det_num]
         cost
 
-        return cost
+        return cost / n
 
 
     def reprojectPoint(self, xyz):
         # TODO: vervang deze placeholder code met projectie
-
+        
         xyz = np.array([xyz[0][0], xyz[1][0], xyz[2][0]])
         # xyz = np.array([xyz[0][0], xyz[1][0], 1.50])
 

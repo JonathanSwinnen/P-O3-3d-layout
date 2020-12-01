@@ -39,7 +39,6 @@ class KalmanPersonTracker:
         self.confidence = 1
 
         self.frames_not_detected = 0
-
         self.previous_updated_pos = x0[0:3]
 
         self.max_certain_speed = max_certain_speed
@@ -79,10 +78,11 @@ class KalmanPersonTracker:
         if z != []:
             z_vect = np.array([z]).T
             print("update " + self.id + "with val: " + str(z), "diff:" + str(z_vect - self.previous_updated_pos) + "")
-            spd = np.linalg.norm(z_vect - self.previous_updated_pos) / self.dt
+            spd = np.linalg.norm(z_vect - self.previous_updated_pos) / ((self.frames_not_detected)*self.dt)
             print("SPEED:", self.id, spd,",", self.confidence)
             #if spd * self.confidence < self.max_certain_speed:
-            if spd * ( 1 - min(0.9, (self.frames_not_detected-1) /10)) < self.max_certain_speed:
+            # if spd * ( 1 - min(0.9, (self.frames_not_detected-1) /10)) < self.max_certain_speed:
+            if spd < self.max_certain_speed:
                 self.frames_not_detected = 0
                 self.pos = self.kf.update(z_vect)
                 self.confidence += self.confidence_growth
@@ -90,6 +90,5 @@ class KalmanPersonTracker:
                 self.previous_updated_pos = self.pos
             else:
                 print("UPDATE REJECTED: misdetection or sudden jump?")
-        return self.pos
 
 
