@@ -19,9 +19,9 @@ vm = VideoPeopleMonitor(calib_path, vid_path_2, vid_path_1, timestamps_path, box
 cv2.namedWindow("Camera one...",cv2.WINDOW_NORMAL)
 cv2.namedWindow("Camera two...",cv2.WINDOW_NORMAL)
 COLOR = {"Daan":(95, 168, 199),"Jonathan":(99, 199, 99),"Mathias P.":(242, 162, 104), "Mathias S.":(200,200,200), "Ebert":(200,40,50), "Miel":(43,0,30)}
-
+cv2.waitKey()
 while True:
-    cv2.waitKey()
+    #cv2.waitKey()
     print("\nFRAME " + str(vm.frame_count) + "\n")
     frame_1, frame_2, _ = vm.get_frames()
     data, boxes, pred, dets, coords = vm.update()

@@ -16,12 +16,6 @@ import copy
 class VideoPeopleMonitor:
     def __init__(self, calib_path, vid_path_1, vid_path_2, person_timestamps_path, vid_data_path):
 
-        f = open(person_timestamps_path, "r")
-        lines = f.read().split("\n")
-        self.timestamps = {}
-        for line in lines:
-            split = line.split(",")
-            self.timestamps[int(split[0])] = split[1:]
         self.camera_1 = cv2.VideoCapture(vid_path_1)
         self.camera_2 = cv2.VideoCapture(vid_path_2)
 
@@ -35,9 +29,10 @@ class VideoPeopleMonitor:
 
         #   Initialize the tracker with appropriate values:
         u = 0 * np.ones((3, 1))
-        stac = 0.8
-        stdm = np.array([[0.1], [0.1], [0.2]])
-        self.tracker = Tracker(u, stac, stdm, 0.1, 4, 0.4, 0.15)
+        # WORKING SETTINGS
+        stac = 0.7
+        stdm = np.array([[0.05], [0.05], [0.05]])
+        self.tracker = Tracker(u, stac, stdm, 0.1, 4, 0.4, 0.05)
 
         self.positioner = Positioner(
             self.calibrated_values, 0.002, 0.2, ([-1, 0, 0], [6, 7, 3])
@@ -47,7 +42,7 @@ class VideoPeopleMonitor:
         self.frame_2 = None
         self.has_captured_frame = False
 
-        self.frame_count = 80
+        self.frame_count = -1
         self.camera_1.set(cv2.CAP_PROP_POS_FRAMES,self.frame_count+1)
         self.camera_2.set(cv2.CAP_PROP_POS_FRAMES,self.frame_count+1)
 
@@ -91,7 +86,7 @@ class VideoPeopleMonitor:
                             event[0], np.array([[4], [4.5], [1.65], [0], [0], [0]]))
                     elif event[2] == "L":
                         self.tracker.add_person(
-                            event[0], np.array([[-0.25], [5.5], [1.65], [0], [0], [0]]))
+                            event[0], np.array([[-0.5], [6], [1.65], [0], [0], [0]]))
             # make tracker prediction
             prediction = copy.deepcopy(self.tracker.predict(self.dt))
 

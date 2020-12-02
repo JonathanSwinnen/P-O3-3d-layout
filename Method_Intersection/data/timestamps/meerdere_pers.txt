@@ -1,6 +1,6 @@
 90,Daan,Enter,R
 130,Ebert,Enter,L
-170,Jonathan,Enter,R
+175,Jonathan,Enter,R
 240,Mathias S.,Enter,R
 333,Mathias P.,Enter,R
 375,Miel,Enter,R
@@ -8,11 +8,11 @@
 486,Mathias S.,Exit,L
 539,Daan,Enter,R
 565,Mathias P.,Exit,L
-586,Daan,Exit,L
+588,Daan,Exit,L
 609,Jonathan,Exit,L
 622,Ebert,Exit,R
 640,Mathias P.,Enter,L
-657,Daan,Enter,L
+658,Daan,Enter,L
 665,Miel,Exit,R
 712,Mathias S.,Enter,L
 747,Jonathan,Enter,L

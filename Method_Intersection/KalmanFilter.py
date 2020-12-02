@@ -70,7 +70,8 @@ class KalmanFilter(object):
         BR = (self.dt ** 2) * np.eye(3, 3)
 
         # Initial Process Noise Covariance
-        self.Q = self.std_acc ** 2 * np.block([[TL, TR], [BR, BL]]).astype(float)
+        #self.Q = (self.std_acc ** 2) * np.block([[TL, TR], [BR, BL]]).astype(float)
+        self.Q = np.dot(self.B, self.B.T) * (self.std_acc**2)
 
         # Initial Measurement Noise Covariance
         self.R = np.matrix(
@@ -94,6 +95,8 @@ class KalmanFilter(object):
             new sampling rate
         """
 
+        exit()
+
         # Define sampling time
         self.dt = dt
 
@@ -109,7 +112,7 @@ class KalmanFilter(object):
 
         # Initial Process Noise Covariance
         self.Q = (
-            self.std_acc ** 2
+            (self.std_acc ** 2)
             * np.block(
                 [
                     [

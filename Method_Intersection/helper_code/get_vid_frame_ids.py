@@ -23,8 +23,8 @@ import os
 import cv2
 import numpy as np
 
-vid_1_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'data', 'videos', 'output_more_person_0.avi'))
-vid_2_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'data', 'videos', 'output_more_person_1.avi'))
+vid_1_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'data', 'videos', 'output_zitten_0.avi'))
+vid_2_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'data', 'videos', 'output_zitten_1.avi'))
 
 cam1 = cv2.VideoCapture(vid_1_path)
 cam2 = cv2.VideoCapture(vid_2_path)
@@ -35,7 +35,7 @@ n = 0
 cv2.namedWindow("1")
 cv2.namedWindow("2")
 
-frame_count = 80
+frame_count = 0
 cam1.set(cv2.CAP_PROP_POS_FRAMES,frame_count+1)
 cam2.set(cv2.CAP_PROP_POS_FRAMES,frame_count+1)
 
