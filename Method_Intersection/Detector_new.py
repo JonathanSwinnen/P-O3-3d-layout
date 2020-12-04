@@ -9,6 +9,10 @@ from math import floor
 import pickle
 
 
+def center_of_box(box):
+    return (box[0] + box[2]) // 2, (box[1] + box[3]) // 2
+
+
 def floor_lists(boxes):
     result = []
     for box in boxes:
@@ -32,26 +36,73 @@ def adjusted_iou(box1, box2):
     return iou_ar / min(calc_area(box1), calc_area(box2))
 
 
+def split_arrays(boxes, scores, labels):
+    boxes_1, boxes_2, scores_1, scores_2 = [], [], [], []
+
+    for i, label in enumerate(labels):
+        if labels == 1:
+            boxes_1.append(boxes[i])
+            scores_1.append(scores[i])
+        else:
+            boxes_2.append(boxes[i])
+            scores_2.append(scores[i])
+    return boxes_1, scores_1, boxes_2, scores_2
+
+
+def main_filter(boxes, scores, min_score):
+    # output vars
+    good_boxes, co = [], []
+
+    # filter
+    for i, box in enumerate(boxes):
+        if scores[i] > min_score:
+            add_im = True
+
+            # setup while loop
+            # deleting images in loop from array doesn't allow for a forloop
+            j = 0
+            run = True
+            if len(good_boxes) == 0:
+                run = False
+
+            while run:
+                if adjusted_iou(box, good_boxes[j]) > 0.8:
+                    if calc_area(box) < calc_area(good_boxes[j]):
+                        del good_boxes[j]
+                        del co[j]
+                        j -= 1
+                    else:
+                        add_im = False
+                        break
+                j += 1
+                if len(good_boxes) == j:
+                    run = False
+
+            if add_im:
+                good_boxes.append(box)
+                co.append(center_of_box(box))
+    return good_boxes, co
+
+
 class Detector:
     """
     Custom class for implementing self trained model.
     """
 
-    def __init__(self, path_model="./data/model/training_23.pth"):
+    def __init__(self, path_model="./data/model/training_49.pt"):
         # define device (gpu/cpu)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print('Evaluate on GPU.') if torch.cuda.is_available() else print('No GPU available, evaluating on CPU.')
 
-        # TODO load from dict
-        # loading the model
-        # self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=False)
-        # in_features = self.model.roi_heads.box_predictor.cls_score.in_features
-        # self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 2)  # 2 = number_classes
+        # loading model from dict
+        self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn()
+        in_features = self.model.roi_heads.box_predictor.cls_score.in_features
+        self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 3)
+        self.model.load_state_dict(torch.load(path_model))
+        self.model.to(self.device)
 
-        # self.model.load_state_dict(torch.load(path_model))
-
-        # temp solution
-        self.model = torch.load(path_model)
+        # OLD (can produce multiple errors!)
+        # self.model = torch.load(path_model)
 
         # evaluation mode
         self.model.eval()
@@ -60,7 +111,7 @@ class Detector:
         # define transformation
         self.transform = T.Compose([T.ToTensor()])
 
-    def detect_both_frames(self, left_frame, right_frame, min_score=0.9, filter_doubles=True):
+    def detect_both_frames(self, left_frame, right_frame, min_score_h=0.9, min_score_m=0.9):
         # convert images to right format
         img_L = Image.fromarray(left_frame).convert("RGB")
         img_R = Image.fromarray(right_frame).convert("RGB")
@@ -84,49 +135,26 @@ class Detector:
                                        output_R["scores"].tolist(),
                                        output_R["labels"].tolist())
 
-        # filter based on score
-        good_boxes_L, good_labels_L, co_L, good_boxes_R, good_labels_R, co_R = [], [], [], [], [], []
-        for i, score in enumerate(scores_L):
-            if score > min_score:
-                add_im = True
-                if filter_doubles:  # filter overlapping boxes
-                    for j in range(len(good_boxes_L)):
-                        if adjusted_iou(boxes_L[i], good_boxes_L[j]) > 0.8:
-                            if calc_area(boxes_L[i]) < calc_area(good_boxes_L[j]):
-                                del good_boxes_L[j]
-                            else:
-                                add_im = False
-                                break
-                if add_im:
-                    good_boxes_L.append(boxes_L[i])
-                    good_labels_L.append(labels_L[i])
-                    co_L.append(((boxes_L[i][0] + boxes_L[i][2])//2,
-                                 (boxes_L[i][1] + boxes_L[i][3])//2))
+        # split heads and masks
+        boxes_L_h, scores_L_h, boxes_L_m, scores_L_m = split_arrays(boxes_L, scores_L, labels_L)
+        boxes_R_h, scores_R_h, boxes_R_m, scores_R_m = split_arrays(boxes_R, scores_R, labels_R)
 
-        for i, score in enumerate(scores_R):
-            if score > min_score:
-                add_im = True
-                if filter_doubles:  # filter overlapping boxes
-                    for j in range(len(good_boxes_R)):
-                        # if overlapping for > 80%, only add the smallest box
-                        if adjusted_iou(boxes_R[i], good_boxes_R[j]) > 0.8:
-                            if calc_area(boxes_R[i]) < calc_area(good_boxes_R[j]):
-                                del good_boxes_R[j]
-                            else:
-                                add_im = False
-                                break
-                if add_im:
-                    good_boxes_R.append(boxes_R[i])
-                    good_labels_R.append(labels_R[i])
-                    co_R.append(((boxes_R[i][0] + boxes_R[i][2])//2,
-                                 (boxes_R[i][1] + boxes_R[i][3])//2))
+        # filter
+        g_boxes_L_h, co_L_h = main_filter(boxes_L_h, scores_L_h, min_score_h)
+        g_boxes_L_m, co_L_m = main_filter(boxes_L_m, scores_L_m, min_score_m)
 
-        return co_L, co_R, good_boxes_L, good_boxes_R
+        g_boxes_R_h, co_R_h = main_filter(boxes_R_h, scores_R_h, min_score_h)
+        g_boxes_R_m, co_R_m = main_filter(boxes_R_m, scores_R_m, min_score_m)
+
+
+        return [(co_L_h, co_R_h, g_boxes_L_h, g_boxes_R_h),
+                (co_L_m, co_R_m, g_boxes_L_m, g_boxes_R_m)]
 
 
 if __name__ == "__main__":
-    cap_1 = cv.VideoCapture('./data/videos/output_one_person_1.avi')
-    cap_2 = cv.VideoCapture('./data/videos/output_one_person_0.avi')
+    print("Extracting data from video and saving it.")
+    cap_1 = cv.VideoCapture('./data/videos/output_more_person_1.avi')
+    cap_2 = cv.VideoCapture('./data/videos/output_more_person_0.avi')
 
     detector = Detector()
 
@@ -158,7 +186,7 @@ if __name__ == "__main__":
     print("Time/frame:", (end-start)/len(all_info))
 
     print(all_info)
-    pickle_out = open("data/video_data/one_person.pckl", "wb")
+    pickle_out = open("data/video_data/more_person_new.pckl", "wb")
     pickle.dump(all_info, pickle_out)
     pickle_out.close()
 
