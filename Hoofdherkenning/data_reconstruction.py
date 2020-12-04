@@ -208,11 +208,29 @@ def calc_score(targets, output):
 
 def main():
     path = "./saved_models/PO3_v4/"
+    cpu_device = torch.device("cpu")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.cuda.is_available():
         print('Evaluate on GPU.')
     else:
         print('Evaluate on CPU.')
+
+    paths_testing = ('./raw_data/meer_pers_0/', './raw_data/meer_pers_1/')
+    paths_generalisation = ('./raw_data/TA_0/', './raw_data/TA_1/')
+
+    dataset_test = PO3_dataset.PO3Dataset(paths_testing, PO3_dataset.get_transform(train=False),
+                                          has_sub_maps=True, ann_path="./raw_data/clean_ann_scaled.pckl")
+    dataset_generalisation = PO3_dataset.PO3Dataset(paths_generalisation, PO3_dataset.get_transform(train=False),
+                                                    has_sub_maps=True,
+                                                    ann_path="./raw_data/clean_ann_scaled.pckl")
+
+    data_loader_test = torch.utils.data.DataLoader(
+        dataset_test, batch_size=1, shuffle=False, num_workers=4,
+        collate_fn=utils.collate_fn)
+
+    data_loader_generalisation = torch.utils.data.DataLoader(
+        dataset_generalisation, batch_size=1, shuffle=False, num_workers=4,
+        collate_fn=utils.collate_fn)
 
     for file in os.listdir(path):
 
@@ -229,14 +247,116 @@ def main():
         model.eval()
         torch.no_grad()
 
-        paths_testing = ('./adjusted_data/meer_pers_0/', './adjusted_data/meer_pers_1/')
-        paths_generalisation = ('./adjusted_data/TA_0/', './adjusted_data/TA_1/')
+        metric_logger = utils.MetricLogger(delimiter="  ")
+        header = 'Test:'
 
-        dataset_test = PO3_dataset.PO3Dataset(paths_testing, PO3_dataset.get_transform(train=False),
-                                              has_sub_maps=False, ann_path="./adjusted_data/clean_ann_scaled.pckl")
-        dataset_generalisation = PO3_dataset.PO3Dataset(paths_generalisation, PO3_dataset.get_transform(train=False),
-                                                        has_sub_maps=False,
-                                                        ann_path="./adjusted_data/clean_ann_scaled.pckl")
+        score_dist_h, score_dist_m = dict(), dict()
+
+        time_dist = []
+        data = []
+        for images, targets in metric_logger.log_every(data_loader_test, 100, header):
+            images = list(img.to(device) for img in images)
+
+            torch.cuda.synchronize()
+
+            start = time.time()
+            outputs = model(images)
+            model_time = time.time() - start
+
+            outputs = [{k: v.to(cpu_device) for k, v in t.items()} for t in outputs]
+            time_dist.append(model_time)
+            im_data = calc_score(targets, outputs)
+
+            score_dist_h = sum_score_distributions(score_dist_h, im_data[0][0])
+            score_dist_m = sum_score_distributions(score_dist_m, im_data[1][0])
+
+            data.append((im_data[0][1:], im_data[1][1:]))
+
+        f_score_h, f_iou_h, nb_h, g_h, f_h, iou_h, dist_h = 0, 0, 0, 0, 0, 0, 0
+        f_score_m, f_iou_m, nb_m, g_m, f_m, iou_m, dist_m = 0, 0, 0, 0, 0, 0, 0
+
+        for it in data:
+            f_score_h += it[0][0]
+            f_iou_h += it[0][1]
+            nb_h += it[0][2]
+            g_h += it[0][3]
+            f_h += it[0][4]
+            iou_h += it[0][3] * it[0][5]
+            dist_h += it[0][3] * it[0][6]
+
+            f_score_m += it[1][0]
+            f_iou_m += it[1][1]
+            nb_m += it[1][2]
+            g_m += it[1][3]
+            f_m += it[1][4]
+            iou_m += it[1][3] * it[1][5]
+            dist_m += it[1][3] * it[1][6]
+
+        iou_h = iou_h/g_h
+        dist_h = dist_h / g_h
+        iou_m = iou_m / g_m
+        dist_m = dist_m / g_m
+
+        data_test = [time_dist, (score_dist_h, f_score_h, f_iou_h, nb_h, g_h, f_h, iou_h, dist_h),
+                     (score_dist_m, f_score_m, f_iou_m, nb_m, g_m, f_m, iou_m, dist_m)]
+        print(data_test)
+
+
+        metric_logger = utils.MetricLogger(delimiter="  ")
+        header = 'Test:'
+
+        score_dist_h, score_dist_m = dict(), dict()
+
+        time_dist = []
+        data = []
+        for images, targets in metric_logger.log_every(data_loader_generalisation, 100, header):
+            images = list(img.to(device) for img in images)
+
+            torch.cuda.synchronize()
+
+            start = time.time()
+            outputs = model(images)
+            model_time = time.time() - start
+
+            outputs = [{k: v.to(cpu_device) for k, v in t.items()} for t in outputs]
+            time_dist.append(model_time)
+            im_data = calc_score(targets, outputs)
+
+            score_dist_h = sum_score_distributions(score_dist_h, im_data[0][0])
+            score_dist_m = sum_score_distributions(score_dist_m, im_data[1][0])
+
+            data.append((im_data[0][1:], im_data[1][1:]))
+
+        f_score_h, f_iou_h, nb_h, g_h, f_h, iou_h, dist_h = 0, 0, 0, 0, 0, 0, 0
+        f_score_m, f_iou_m, nb_m, g_m, f_m, iou_m, dist_m = 0, 0, 0, 0, 0, 0, 0
+
+        for it in data:
+            f_score_h += it[0][0]
+            f_iou_h += it[0][1]
+            nb_h += it[0][2]
+            g_h += it[0][3]
+            f_h += it[0][4]
+            iou_h += it[0][3] * it[0][5]
+            dist_h += it[0][3] * it[0][6]
+
+            f_score_m += it[1][0]
+            f_iou_m += it[1][1]
+            nb_m += it[1][2]
+            g_m += it[1][3]
+            f_m += it[1][4]
+            iou_m += it[1][3] * it[1][5]
+            dist_m += it[1][3] * it[1][6]
+
+        iou_h = iou_h / g_h
+        dist_h = dist_h / g_h
+        iou_m = iou_m / g_m
+        dist_m = dist_m / g_m
+
+        data_gen = [time_dist, (score_dist_h, f_score_h, f_iou_h, nb_h, g_h, f_h, iou_h, dist_h),
+                     (score_dist_m, f_score_m, f_iou_m, nb_m, g_m, f_m, iou_m, dist_m)]
+        print(data_gen)
+        with open(full_path[:-2] + "pckl", 'wb') as f:
+            pickle.dump((data_test, data_gen), f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == "__main__":
