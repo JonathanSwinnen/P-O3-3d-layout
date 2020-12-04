@@ -19,13 +19,13 @@ class PO3Dataset(object):
     """
     Custom dataset class for training a head detector model.
     """
-    def __init__(self, paths, transforms, SUB_MAPS=False, ann_path="./adjusted_data/clean_ann_scaled.pkl"):
+    def __init__(self, paths, transforms, has_sub_maps=False, ann_path="./adjusted_data/clean_ann_scaled.pkl"):
         # paths where images are located
         self.paths = paths
 
         # are images located in submap: "path/img/img_xx.png" (True)
         # or not: "path/img_xx.png" (False)
-        self.sub_maps = SUB_MAPS
+        self.sub_maps = has_sub_maps
 
         # transformer
         self.transforms = transforms
@@ -62,10 +62,7 @@ class PO3Dataset(object):
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
 
         # define classes
-        if self.ann[img_path][1][0] == 0:  # background
-            labels = torch.zeros((len(boxes),), dtype=torch.int64)
-        else:  # heads
-            labels = torch.ones((len(boxes),), dtype=torch.int64)
+        labels = torch.tensor(self.ann[img_path][1], dtype=torch.int64)  # background
 
         # calc area
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])

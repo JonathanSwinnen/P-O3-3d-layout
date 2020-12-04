@@ -69,10 +69,10 @@ def split_arrays(boxes, scores, labels):
     boxes_1, boxes_2, scores_1, scores_2 = [], [], [], []
 
     for i, label in enumerate(labels):
-        if labels == 1:
+        if label == 1:
             boxes_1.append(boxes[i])
             scores_1.append(scores[i])
-        else:
+        elif label == 2:
             boxes_2.append(boxes[i])
             scores_2.append(scores[i])
     return boxes_1, scores_1, boxes_2, scores_2
@@ -129,7 +129,7 @@ def pair_boxes(boxes_target, co_target, boxes_predicted, co_predicted):
     recognised, wrong = 0, 0
     paired_boxes = dict()
     for i, box in enumerate(boxes_target):
-        paired_boxes[i] = [(box, co_target)]
+        paired_boxes[i] = [(box, co_target[i])]
 
     for i, co in enumerate(co_predicted):
         smallest_dist, smallest_id = float("inf"), -1
@@ -138,24 +138,26 @@ def pair_boxes(boxes_target, co_target, boxes_predicted, co_predicted):
             if dist < smallest_dist:
                 smallest_dist = dist
                 smallest_id = id
-
-        if len(paired_boxes[smallest_id]) == 1:
-            if iou(paired_boxes[smallest_id][0][0], boxes_predicted[i]) > 0:
-                recognised += 1
-                paired_boxes[smallest_id] = [paired_boxes[smallest_id][0], (boxes_predicted[i], co), smallest_dist]
+        if smallest_id == -1:
+            wrong += 1
+        else:
+            if len(paired_boxes[smallest_id]) == 1:
+                if iou(paired_boxes[smallest_id][0][0], boxes_predicted[i]) > 0:
+                    recognised += 1
+                    paired_boxes[smallest_id] = [paired_boxes[smallest_id][0], (boxes_predicted[i], co), smallest_dist]
+                else:
+                    wrong += 1
             else:
                 wrong += 1
-        else:
-            wrong += 1
-            if smallest_dist < paired_boxes[smallest_id][3]:
-                paired_boxes[smallest_id] = [paired_boxes[smallest_id][0], (boxes_predicted[i], co), smallest_dist]
+                if smallest_dist < paired_boxes[smallest_id][2]:
+                    paired_boxes[smallest_id] = [paired_boxes[smallest_id][0], (boxes_predicted[i], co), smallest_dist]
 
     all_ious, all_dists = [], []
 
     for paired in paired_boxes.values():
         if len(paired) > 1:
             all_ious.append(iou(paired[0][0], paired[1][0]))
-            all_dists.append(paired[3])
+            all_dists.append(paired[2])
 
     average_iou, average_dist = 0, 0
     if len(all_ious) > 0:
@@ -193,8 +195,8 @@ def calc_score(targets, output):
         if label == 1:
             target_heads.append(target_boxes[i])
             target_co_heads.append(target_coordinates[i])
-        else:
-            target_masks.append(target_heads[i])
+        elif label == 2:
+            target_masks.append(target_boxes[i])
             target_co_masks.append(target_coordinates[i])
 
     nb_heads, nb_recognized_heads, nb_incorrect_heads, matched_area_heads, dist_heads = \
@@ -233,130 +235,131 @@ def main():
         collate_fn=utils.collate_fn)
 
     for file in os.listdir(path):
+        if file.endswith('.pt'):
+            full_path = os.path.join(path, file)
+            print(full_path)
+            # setup model
+            model = torchvision.models.detection.fasterrcnn_resnet50_fpn()
+            in_features = model.roi_heads.box_predictor.cls_score.in_features
+            model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 3)
+            model.load_state_dict(torch.load(full_path))
+            model.to(device)
 
-        full_path = os.path.join(path, file)
+            # evaluating
+            model.eval()
+            torch.no_grad()
 
-        # setup model
-        model = torchvision.models.detection.fasterrcnn_resnet50_fpn()
-        in_features = model.roi_heads.box_predictor.cls_score.in_features
-        model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 3)
-        model.load_state_dict(torch.load(full_path))
-        model.to(device)
+            metric_logger = utils.MetricLogger(delimiter="  ")
+            header = 'Test:'
 
-        # evaluating
-        model.eval()
-        torch.no_grad()
+            score_dist_h, score_dist_m = dict(), dict()
 
-        metric_logger = utils.MetricLogger(delimiter="  ")
-        header = 'Test:'
+            time_dist = []
+            data = []
+            for images, targets in metric_logger.log_every(data_loader_test, 100, header):
+                images = list(img.to(device) for img in images)
 
-        score_dist_h, score_dist_m = dict(), dict()
+                torch.cuda.synchronize()
 
-        time_dist = []
-        data = []
-        for images, targets in metric_logger.log_every(data_loader_test, 100, header):
-            images = list(img.to(device) for img in images)
+                start = time.time()
+                outputs = model(images)
+                model_time = time.time() - start
 
-            torch.cuda.synchronize()
+                outputs = [{k: v.to(cpu_device) for k, v in t.items()} for t in outputs]
+                time_dist.append(model_time)
+                im_data = calc_score(targets, outputs)
 
-            start = time.time()
-            outputs = model(images)
-            model_time = time.time() - start
+                score_dist_h = sum_score_distributions(score_dist_h, im_data[0][0])
+                score_dist_m = sum_score_distributions(score_dist_m, im_data[1][0])
 
-            outputs = [{k: v.to(cpu_device) for k, v in t.items()} for t in outputs]
-            time_dist.append(model_time)
-            im_data = calc_score(targets, outputs)
+                data.append((im_data[0][1:], im_data[1][1:]))
 
-            score_dist_h = sum_score_distributions(score_dist_h, im_data[0][0])
-            score_dist_m = sum_score_distributions(score_dist_m, im_data[1][0])
+            f_score_h, f_iou_h, nb_h, g_h, f_h, iou_h, dist_h = 0, 0, 0, 0, 0, 0, 0
+            f_score_m, f_iou_m, nb_m, g_m, f_m, iou_m, dist_m = 0, 0, 0, 0, 0, 0, 0
 
-            data.append((im_data[0][1:], im_data[1][1:]))
+            for it in data:
+                f_score_h += it[0][0]
+                f_iou_h += it[0][1]
+                nb_h += it[0][2]
+                g_h += it[0][3]
+                f_h += it[0][4]
+                iou_h += it[0][3] * it[0][5]
+                dist_h += it[0][3] * it[0][6]
 
-        f_score_h, f_iou_h, nb_h, g_h, f_h, iou_h, dist_h = 0, 0, 0, 0, 0, 0, 0
-        f_score_m, f_iou_m, nb_m, g_m, f_m, iou_m, dist_m = 0, 0, 0, 0, 0, 0, 0
+                f_score_m += it[1][0]
+                f_iou_m += it[1][1]
+                nb_m += it[1][2]
+                g_m += it[1][3]
+                f_m += it[1][4]
+                iou_m += it[1][3] * it[1][5]
+                dist_m += it[1][3] * it[1][6]
 
-        for it in data:
-            f_score_h += it[0][0]
-            f_iou_h += it[0][1]
-            nb_h += it[0][2]
-            g_h += it[0][3]
-            f_h += it[0][4]
-            iou_h += it[0][3] * it[0][5]
-            dist_h += it[0][3] * it[0][6]
+            iou_h = iou_h/g_h
+            dist_h = dist_h / g_h
+            iou_m = iou_m / g_m
+            dist_m = dist_m / g_m
 
-            f_score_m += it[1][0]
-            f_iou_m += it[1][1]
-            nb_m += it[1][2]
-            g_m += it[1][3]
-            f_m += it[1][4]
-            iou_m += it[1][3] * it[1][5]
-            dist_m += it[1][3] * it[1][6]
-
-        iou_h = iou_h/g_h
-        dist_h = dist_h / g_h
-        iou_m = iou_m / g_m
-        dist_m = dist_m / g_m
-
-        data_test = [time_dist, (score_dist_h, f_score_h, f_iou_h, nb_h, g_h, f_h, iou_h, dist_h),
-                     (score_dist_m, f_score_m, f_iou_m, nb_m, g_m, f_m, iou_m, dist_m)]
-        print(data_test)
+            data_test = [time_dist, (score_dist_h, f_score_h, f_iou_h, nb_h, g_h, f_h, iou_h, dist_h),
+                         (score_dist_m, f_score_m, f_iou_m, nb_m, g_m, f_m, iou_m, dist_m)]
+            print(data_test)
 
 
-        metric_logger = utils.MetricLogger(delimiter="  ")
-        header = 'Test:'
+            metric_logger = utils.MetricLogger(delimiter="  ")
+            header = 'Test:'
 
-        score_dist_h, score_dist_m = dict(), dict()
+            score_dist_h, score_dist_m = dict(), dict()
 
-        time_dist = []
-        data = []
-        for images, targets in metric_logger.log_every(data_loader_generalisation, 100, header):
-            images = list(img.to(device) for img in images)
+            time_dist = []
+            data = []
+            for images, targets in metric_logger.log_every(data_loader_generalisation, 100, header):
+                images = list(img.to(device) for img in images)
 
-            torch.cuda.synchronize()
+                torch.cuda.synchronize()
 
-            start = time.time()
-            outputs = model(images)
-            model_time = time.time() - start
+                start = time.time()
+                outputs = model(images)
+                model_time = time.time() - start
 
-            outputs = [{k: v.to(cpu_device) for k, v in t.items()} for t in outputs]
-            time_dist.append(model_time)
-            im_data = calc_score(targets, outputs)
+                outputs = [{k: v.to(cpu_device) for k, v in t.items()} for t in outputs]
+                time_dist.append(model_time)
+                im_data = calc_score(targets, outputs)
 
-            score_dist_h = sum_score_distributions(score_dist_h, im_data[0][0])
-            score_dist_m = sum_score_distributions(score_dist_m, im_data[1][0])
+                score_dist_h = sum_score_distributions(score_dist_h, im_data[0][0])
+                score_dist_m = sum_score_distributions(score_dist_m, im_data[1][0])
 
-            data.append((im_data[0][1:], im_data[1][1:]))
+                data.append((im_data[0][1:], im_data[1][1:]))
 
-        f_score_h, f_iou_h, nb_h, g_h, f_h, iou_h, dist_h = 0, 0, 0, 0, 0, 0, 0
-        f_score_m, f_iou_m, nb_m, g_m, f_m, iou_m, dist_m = 0, 0, 0, 0, 0, 0, 0
+            f_score_h, f_iou_h, nb_h, g_h, f_h, iou_h, dist_h = 0, 0, 0, 0, 0, 0, 0
+            f_score_m, f_iou_m, nb_m, g_m, f_m, iou_m, dist_m = 0, 0, 0, 0, 0, 0, 0
 
-        for it in data:
-            f_score_h += it[0][0]
-            f_iou_h += it[0][1]
-            nb_h += it[0][2]
-            g_h += it[0][3]
-            f_h += it[0][4]
-            iou_h += it[0][3] * it[0][5]
-            dist_h += it[0][3] * it[0][6]
+            for it in data:
+                f_score_h += it[0][0]
+                f_iou_h += it[0][1]
+                nb_h += it[0][2]
+                g_h += it[0][3]
+                f_h += it[0][4]
+                iou_h += it[0][3] * it[0][5]
+                dist_h += it[0][3] * it[0][6]
 
-            f_score_m += it[1][0]
-            f_iou_m += it[1][1]
-            nb_m += it[1][2]
-            g_m += it[1][3]
-            f_m += it[1][4]
-            iou_m += it[1][3] * it[1][5]
-            dist_m += it[1][3] * it[1][6]
+                f_score_m += it[1][0]
+                f_iou_m += it[1][1]
+                nb_m += it[1][2]
+                g_m += it[1][3]
+                f_m += it[1][4]
+                iou_m += it[1][3] * it[1][5]
+                dist_m += it[1][3] * it[1][6]
 
-        iou_h = iou_h / g_h
-        dist_h = dist_h / g_h
-        iou_m = iou_m / g_m
-        dist_m = dist_m / g_m
+            iou_h = iou_h / g_h
+            dist_h = dist_h / g_h
+            iou_m = iou_m / g_m
+            dist_m = dist_m / g_m
 
-        data_gen = [time_dist, (score_dist_h, f_score_h, f_iou_h, nb_h, g_h, f_h, iou_h, dist_h),
-                     (score_dist_m, f_score_m, f_iou_m, nb_m, g_m, f_m, iou_m, dist_m)]
-        print(data_gen)
-        with open(full_path[:-2] + "pckl", 'wb') as f:
-            pickle.dump((data_test, data_gen), f, protocol=pickle.HIGHEST_PROTOCOL)
+            data_gen = [time_dist, (score_dist_h, f_score_h, f_iou_h, nb_h, g_h, f_h, iou_h, dist_h),
+                         (score_dist_m, f_score_m, f_iou_m, nb_m, g_m, f_m, iou_m, dist_m)]
+            print(data_gen)
+            with open(full_path[:-2] + "pckl", 'wb') as f:
+                pickle.dump((data_test, data_gen), f, protocol=pickle.HIGHEST_PROTOCOL)
+            print("data saved")
 
 
 if __name__ == "__main__":
