@@ -4,6 +4,7 @@ from PIL import Image
 import PO3_dataset
 from math import floor
 import time
+import torchvision
 import multiprocessing
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
@@ -16,7 +17,11 @@ if torch.cuda.is_available():
 else:
     print('Evaluate on CPU.')
 
-model = torch.load("./saved_models/PO3_v3/training_23.pth")
+model = torchvision.models.detection.fasterrcnn_resnet50_fpn()
+in_features = model.roi_heads.box_predictor.cls_score.in_features
+model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 3)
+model.load_state_dict(torch.load("./saved_models/PO3_v5/training_49.pt"))
+model.to(device)
 model.eval()
 torch.no_grad()
 
@@ -55,7 +60,7 @@ def get_bboxes(img):
 
 
 print("extracting frames")
-cap = cv.VideoCapture('./videos/output_TA_1.avi')
+cap = cv.VideoCapture('./videos/output_more_person_1.avi')
 imgs = []
 frame_count = int(cap.get(cv.CAP_PROP_FRAME_COUNT))
 count = 0
@@ -78,13 +83,14 @@ while cap.isOpened():
 
     boxes, scores, labels = floor_lists(output['boxes'].tolist()), output['scores'].tolist(), output['labels'].tolist()
     good_boxes, good_labels = [], []
+    print(scores, labels)
 
     wait = False
     # filter based on score
     for i, score in enumerate(scores):
         if score > 0.9:
             add_im = True
-            if True:  # filter overlapping boxes
+            if False:  # filter overlapping boxes
                 for j in range(len(good_boxes)):
                     if iou(boxes[i], good_boxes[j]) > 0.8:
                         if calc_area(boxes[i]) < calc_area(good_boxes[j]):

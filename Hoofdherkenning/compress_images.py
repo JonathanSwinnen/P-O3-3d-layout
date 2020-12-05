@@ -3,6 +3,28 @@ import os
 from itertools import chain
 from math import floor
 import time
+import numpy as np
+
+
+def combine_images(paths):
+    for path in paths:
+        to_path = './combined_data/' + path + '/'
+        from_path_0 = './raw_data/' + path + '_0/img/'
+        from_path_1 = './raw_data/' + path + '_1/img/'
+        try:
+            os.mkdir(to_path)
+        except FileExistsError:
+            # directory already exists
+            pass
+
+        path, dirs, files = next(os.walk(from_path_0))
+        file_count = len(files)
+        print(to_path)
+        for i in range(file_count):
+            img1 = cv.imread(from_path_1 + "im_" + str(i) + ".png")
+            img2 = cv.imread(from_path_0 + "im_" + str(i) + ".png")
+            cv.imwrite(to_path + "im_" + str(i) + ".png", np.concatenate((img1, img2), axis=0))
+
 
 
 def compress_images(paths, SCALE_DOWN_FACTOR = 1):
@@ -37,6 +59,8 @@ def compress_images(paths, SCALE_DOWN_FACTOR = 1):
 
 
 if __name__ == "__main__":
-    paths = ('./raw_data/apart_0/', './raw_data/meer_pers_0/', './raw_data/zittend_0/', './raw_data/apart_1/',
-             './raw_data/meer_pers_1/', './raw_data/zittend_1/', './raw_data/videodata_0/', './raw_data/videodata_1/')
-    compress_images(paths, SCALE_DOWN_FACTOR=4)
+    #paths = ('./raw_data/apart_0/', './raw_data/meer_pers_0/', './raw_data/zittend_0/', './raw_data/apart_1/',
+             #'./raw_data/meer_pers_1/', './raw_data/zittend_1/', './raw_data/videodata_0/', './raw_data/videodata_1/')
+    #compress_images(paths, SCALE_DOWN_FACTOR=4)
+    paths = ('apart', 'meer_pers', 'TA', 'TAFELS', 'two', 'zittend')
+    combine_images(paths)

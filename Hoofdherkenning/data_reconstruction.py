@@ -235,8 +235,9 @@ def main():
         collate_fn=utils.collate_fn)
 
     for file in os.listdir(path):
-        if file.endswith('.pt'):
+        if file.endswith('.pt') and not os.path.exists(os.path.join(path,file[:-2]+"pckl")):
             full_path = os.path.join(path, file)
+            #full_path = path
             print(full_path)
             # setup model
             model = torchvision.models.detection.fasterrcnn_resnet50_fpn()

@@ -19,7 +19,7 @@ import plot_losses
 
 def build_model(num_classes):
     # get moddel Resnet
-    model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=False)
+    model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
     in_features = model.roi_heads.box_predictor.cls_score.in_features
     model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
     return model
@@ -35,14 +35,14 @@ def main():
     # debug/testing
     #paths_training = ('./raw_data/TAFELS_0/', './raw_data/TAFELS_1/')
 
-    paths_training = ('./adjusted_data/apart_0/', './adjusted_data/apart_1/',
-                      './adjusted_data/zittend_0/', './adjusted_data/zittend_1/',
-                      './adjusted_data/TAFELS_0/', './adjusted_data/TAFELS_1/',
-                      './adjusted_data/two_0/', './adjusted_data/two_1/')
+    paths_training = ('./combined_data/apart/',
+                      './combined_data/zittend/',
+                      './combined_data/TAFELS/',
+                      './combined_data/two/')
 
-    paths_testing = ('./adjusted_data/meer_pers_0/', './adjusted_data/meer_pers_1/')
+    paths_testing = ('./combined_data/meer_pers/',)
 
-    paths_generalisation = ('./adjusted_data/TA_0/', './adjusted_data/TA_1/')
+    paths_generalisation = ('./combined_data/TA/',)
 
     # debug/testing
     # paths = ('./adjusted_data/zittend_0/', './adjusted_data/zittend_1/')
@@ -52,11 +52,11 @@ def main():
 
     # use our dataset and defined transformations
     dataset = PO3_dataset.PO3Dataset(paths_training, PO3_dataset.get_transform(train=True),
-                                     has_sub_maps=False, ann_path="./adjusted_data/clean_ann_scaled.pckl")
+                                     has_sub_maps=False, ann_path="./combined_data/clean_ann_combined.pkl")
     dataset_test = PO3_dataset.PO3Dataset(paths_testing, PO3_dataset.get_transform(train=False),
-                                          has_sub_maps=False, ann_path="./adjusted_data/clean_ann_scaled.pckl")
+                                          has_sub_maps=False, ann_path="./combined_data/clean_ann_combined.pkl")
     dataset_generalisation = PO3_dataset.PO3Dataset(paths_generalisation, PO3_dataset.get_transform(train=False),
-                                          has_sub_maps=False, ann_path="./adjusted_data/clean_ann_scaled.pckl")
+                                          has_sub_maps=False, ann_path="./combined_data/clean_ann_combined.pkl")
 
     # split the dataset in train and test set randomly
     indices = torch.randperm(len(dataset)).tolist()
@@ -90,7 +90,7 @@ def main():
     # and a learning rate scheduler
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
 
-    MODEL_PATH = "./saved_models/PO3_v7/"
+    MODEL_PATH = "./saved_models/PO3_v8/"
     try:
         os.mkdir(MODEL_PATH)
     except FileExistsError:
