@@ -40,10 +40,10 @@ def split_arrays(boxes, scores, labels):
     boxes_1, boxes_2, scores_1, scores_2 = [], [], [], []
 
     for i, label in enumerate(labels):
-        if labels == 1:
+        if label == 1:
             boxes_1.append(boxes[i])
             scores_1.append(scores[i])
-        else:
+        elif label == 2:
             boxes_2.append(boxes[i])
             scores_2.append(scores[i])
     return boxes_1, scores_1, boxes_2, scores_2
@@ -89,7 +89,7 @@ class Detector:
     Custom class for implementing self trained model.
     """
 
-    def __init__(self, path_model="./data/model/training_49.pt"):
+    def __init__(self, path_model="./data/model/training_49_full.pt"):
         # define device (gpu/cpu)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print('Evaluate on GPU.') if torch.cuda.is_available() else print('No GPU available, evaluating on CPU.')
@@ -175,7 +175,11 @@ if __name__ == "__main__":
         if not ret_2:
             print("failed to grab frame_2")
             break
-        frame_1, frame_2 = cv.resize(frame_1, (480, 270)), cv.resize(frame_2, (480, 270))
+        # frame_1, frame_2 = cv.resize(frame_1, (480, 270)), cv.resize(frame_2, (480, 270))
+        data = detector.detect_both_frames(frame_1, frame_2)
+        boxes_h = data[0][2]
+        boxes_m = data[1][2]
+
         all_info.append(detector.detect_both_frames(frame_1, frame_2))
         i += 1
         if i%10 == 0:
