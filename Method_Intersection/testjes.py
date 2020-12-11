@@ -16,8 +16,10 @@ timestamps_path = os.path.join(
 boxes_path = os.path.join(dirname, "data/video_data/meerdere_pers.pckl")
 
 vm = VideoPeopleMonitor(calib_path, vid_path_2, vid_path_1, timestamps_path, boxes_path)
+
 cv2.namedWindow("Camera one...",cv2.WINDOW_NORMAL)
 cv2.namedWindow("Camera two...",cv2.WINDOW_NORMAL)
+
 COLOR = {"Daan":(95, 168, 199),"Jonathan":(99, 199, 99),"Mathias P.":(242, 162, 104), "Mathias S.":(200,200,200), "Ebert":(200,40,50), "Miel":(43,0,30)}
 cv2.waitKey()
 while True:
@@ -101,7 +103,8 @@ while True:
     cv2.imshow("Camera one...", frame_1)
     cv2.imshow("Camera two...", frame_2)
     #cv2.waitKey()
-    cv2.waitKey(100)
+    cv2.waitKey(1)
     print("data:", data)
     print()
-    
+
+

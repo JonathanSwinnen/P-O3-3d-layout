@@ -1,6 +1,6 @@
 import Calibration
 from DetectorPrerecorded import DetectorPrerec
-#from Detector_new import Detector
+from Detector_new import Detector
 from Positioner import *
 from Tracker import Tracker
 from time import perf_counter
@@ -24,8 +24,8 @@ class VideoPeopleMonitor:
         self.calibrated_values = Calibration.load_calibration(calib_path)
         self.image_size = self.calibrated_values["image_size"]
 
-        #self.detector = Detector()
-        self.detector = DetectorPrerec(vid_data_path)
+        self.detector = Detector()
+        # self.detector = DetectorPrerec(vid_data_path)
 
         #   Initialize the tracker with appropriate values:
         u = 0 * np.ones((3, 1))
@@ -95,11 +95,10 @@ class VideoPeopleMonitor:
                 coordinates_1,
                 coordinates_2,
                 boxes_1,
-                boxes_2, ) = self.detector.detect_bot_frames(self.frame_count)
-            # ) = self.detector.detect_both_frames(self.frame_1, self.frame_2)
+                boxes_2, # ) = self.detector.detect_bot_frames(self.frame_count)
+            ) = self.detector.detect_both_frames(self.frame_1, self.frame_2)[0]
             coords = (coordinates_1, coordinates_2)
 
-            
 
             # this frame needs to be saved and calculated!
             # detect points

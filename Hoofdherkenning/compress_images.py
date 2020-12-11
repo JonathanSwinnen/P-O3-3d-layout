@@ -7,6 +7,8 @@ import numpy as np
 
 
 def combine_images(paths):
+    count = 0
+    time_t = 0
     for path in paths:
         to_path = './combined_data/' + path + '/'
         from_path_0 = './raw_data/' + path + '_0/img/'
@@ -23,8 +25,13 @@ def combine_images(paths):
         for i in range(file_count):
             img1 = cv.imread(from_path_1 + "im_" + str(i) + ".png")
             img2 = cv.imread(from_path_0 + "im_" + str(i) + ".png")
+            start = time.time()
+            concate = np.concatenate((img1, img2), axis=0)
+            end = time.time()
+            time_t += (end - start)
+            count += 1
             cv.imwrite(to_path + "im_" + str(i) + ".png", np.concatenate((img1, img2), axis=0))
-
+        print("Time/image: ", time_t/count)
 
 
 def compress_images(paths, SCALE_DOWN_FACTOR = 1):
@@ -59,8 +66,8 @@ def compress_images(paths, SCALE_DOWN_FACTOR = 1):
 
 
 if __name__ == "__main__":
-    #paths = ('./raw_data/apart_0/', './raw_data/meer_pers_0/', './raw_data/zittend_0/', './raw_data/apart_1/',
-             #'./raw_data/meer_pers_1/', './raw_data/zittend_1/', './raw_data/videodata_0/', './raw_data/videodata_1/')
-    #compress_images(paths, SCALE_DOWN_FACTOR=4)
+    # paths = ('./raw_data/apart_0/', './raw_data/meer_pers_0/', './raw_data/zittend_0/', './raw_data/apart_1/','./raw_data/two_0/',
+    #          './raw_data/meer_pers_1/', './raw_data/zittend_1/', './raw_data/TA_0/', './raw_data/TA_1/', './raw_data/two_1/')
+    # compress_images(paths, SCALE_DOWN_FACTOR=4)
     paths = ('apart', 'meer_pers', 'TA', 'TAFELS', 'two', 'zittend')
     combine_images(paths)

@@ -22,7 +22,9 @@ def build_model(num_classes):
     model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
     in_features = model.roi_heads.box_predictor.cls_score.in_features
     model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
+    model.load_state_dict(torch.load("./saved_models/PO3_v10/training_23.pt"))
     return model
+
 
 def main():
     # train on the GPU or on the CPU, if a GPU is not available
@@ -35,14 +37,14 @@ def main():
     # debug/testing
     #paths_training = ('./raw_data/TAFELS_0/', './raw_data/TAFELS_1/')
 
-    paths_training = ('./combined_data/apart/',
-                      './combined_data/zittend/',
-                      './combined_data/TAFELS/',
-                      './combined_data/two/')
+    paths_training = ('./raw_data/apart_0/', './raw_data/apart_1/',
+                      './raw_data/zittend_0/', './raw_data/zittend_1/',
+                      './raw_data/TAFELS_0/', './raw_data/TAFELS_1/',
+                      './raw_data/two_0/', './raw_data/two_1/')
 
-    paths_testing = ('./combined_data/meer_pers/',)
+    paths_testing = ('./raw_data/meer_pers_0/','./raw_data/meer_pers_1/')
 
-    paths_generalisation = ('./combined_data/TA/',)
+    paths_generalisation = ('./raw_data/TA_0/','./raw_data/TA_1/')
 
     # debug/testing
     # paths = ('./adjusted_data/zittend_0/', './adjusted_data/zittend_1/')
@@ -52,11 +54,11 @@ def main():
 
     # use our dataset and defined transformations
     dataset = PO3_dataset.PO3Dataset(paths_training, PO3_dataset.get_transform(train=True),
-                                     has_sub_maps=False, ann_path="./combined_data/clean_ann_combined.pkl")
+                                     has_sub_maps=True, ann_path="./raw_data/clean_ann_scaled.pckl")
     dataset_test = PO3_dataset.PO3Dataset(paths_testing, PO3_dataset.get_transform(train=False),
-                                          has_sub_maps=False, ann_path="./combined_data/clean_ann_combined.pkl")
+                                          has_sub_maps=True, ann_path="./raw_data/clean_ann_scaled.pckl")
     dataset_generalisation = PO3_dataset.PO3Dataset(paths_generalisation, PO3_dataset.get_transform(train=False),
-                                          has_sub_maps=False, ann_path="./combined_data/clean_ann_combined.pkl")
+                                          has_sub_maps=True, ann_path="./raw_data/clean_ann_scaled.pckl")
 
     # split the dataset in train and test set randomly
     indices = torch.randperm(len(dataset)).tolist()
@@ -90,7 +92,7 @@ def main():
     # and a learning rate scheduler
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
 
-    MODEL_PATH = "./saved_models/PO3_v8/"
+    MODEL_PATH = "./saved_models/PO3_v10/"
     try:
         os.mkdir(MODEL_PATH)
     except FileExistsError:
@@ -100,7 +102,7 @@ def main():
     tr_loss = []
 
     # let's train it for a few epochs
-    num_epochs = 50
+    num_epochs = 100
 
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
@@ -108,7 +110,7 @@ def main():
         print("Training Loss: ", str(training_data.loss)[:7])
         tr_loss.append(float(str(training_data.loss)[:7]))
         # update the learning rate
-        lr_scheduler.step()
+        # lr_scheduler.step()
         # evaluate on the test dataset
 
         _, epoch_validation = evaluate(model, data_loader_test, device=device)
@@ -120,14 +122,12 @@ def main():
         print("Heads generalisationset:", epoch_generalisation[0][1:])
         print("Masks generalisationset:", epoch_generalisation[1][1:])
 
-        with open(os.path.join(MODEL_PATH, ('data_' + str(epoch) + '.pckl')), 'wb') as f:
+        with open(os.path.join(MODEL_PATH, ('data_' + str(epoch + 24) + '.pckl')), 'wb') as f:
             pickle.dump((tr_loss, epoch_validation, epoch_generalisation), f, protocol=pickle.HIGHEST_PROTOCOL)
 
         # save current version of the model
-        print("Saved the model at:", os.path.join(MODEL_PATH, "training_" + str(epoch) + ".pt"))
-        torch.save(model.state_dict(), os.path.join(MODEL_PATH, "training_" + str(epoch) + ".pt"))
-
-
+        print("Saved the model at:", os.path.join(MODEL_PATH, "training_" + str(epoch + 24) + ".pt"))
+        torch.save(model.state_dict(), os.path.join(MODEL_PATH, "training_" + str(epoch + 24) + ".pt"))
 
     print(tr_loss)
 
