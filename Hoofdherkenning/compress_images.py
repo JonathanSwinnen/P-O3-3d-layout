@@ -7,6 +7,10 @@ import numpy as np
 
 
 def combine_images(paths):
+    """
+    Code for comntatinating images verticaly and saving them.
+    All images in the given path are processed.
+    """
     count = 0
     time_t = 0
     for path in paths:
@@ -18,19 +22,27 @@ def combine_images(paths):
         except FileExistsError:
             # directory already exists
             pass
-
+        # count how many images in current path
         path, dirs, files = next(os.walk(from_path_0))
         file_count = len(files)
+
+        # progress update
         print(to_path)
         for i in range(file_count):
+            # retrieve 2 images
             img1 = cv.imread(from_path_1 + "im_" + str(i) + ".png")
             img2 = cv.imread(from_path_0 + "im_" + str(i) + ".png")
+            # count how much time for needed concatenating
             start = time.time()
-            concate = np.concatenate((img1, img2), axis=0)
+            concatenate = np.concatenate((img1, img2), axis=0)
             end = time.time()
             time_t += (end - start)
             count += 1
-            cv.imwrite(to_path + "im_" + str(i) + ".png", np.concatenate((img1, img2), axis=0))
+
+            # write concatenated image
+            cv.imwrite(to_path + "im_" + str(i) + ".png", concatenate)
+
+        # print average time for concatenation
         print("Time/image: ", time_t/count)
 
 

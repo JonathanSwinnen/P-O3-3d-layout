@@ -8,6 +8,10 @@ import torchvision
 import multiprocessing
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
+"""
+This file is used to test models.
+This file is a draft which changes on what exactly should be extracted.
+"""
 
 # device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

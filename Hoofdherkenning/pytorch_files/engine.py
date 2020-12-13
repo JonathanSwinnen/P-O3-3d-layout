@@ -125,7 +125,7 @@ def pair_boxes(boxes_target, co_target, boxes_predicted, co_predicted):
             wrong += 1
         else:
             if len(paired_boxes[smallest_id]) == 1:
-                if iou(paired_boxes[smallest_id][0][0], boxes_predicted[i]) > 0:
+                if iou(paired_boxes[smallest_id][0][0], boxes_predicted[i]) > 0.5:
                     recognised += 1
                     paired_boxes[smallest_id] = [paired_boxes[smallest_id][0], (boxes_predicted[i], co), smallest_dist]
                 else:

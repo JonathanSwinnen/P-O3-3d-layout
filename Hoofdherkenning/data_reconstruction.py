@@ -142,7 +142,7 @@ def pair_boxes(boxes_target, co_target, boxes_predicted, co_predicted):
             wrong += 1
         else:
             if len(paired_boxes[smallest_id]) == 1:
-                if iou(paired_boxes[smallest_id][0][0], boxes_predicted[i]) > 0:
+                if iou(paired_boxes[smallest_id][0][0], boxes_predicted[i]) > 0.5:
                     recognised += 1
                     paired_boxes[smallest_id] = [paired_boxes[smallest_id][0], (boxes_predicted[i], co), smallest_dist]
                 else:
@@ -209,7 +209,7 @@ def calc_score(targets, output):
             (score_distr_masks, f_score_masks, f_iou_masks, nb_masks, nb_recognized_masks, nb_incorrect_masks, matched_area_masks, dist_masks)]
 
 def main():
-    path = "./saved_models/PO3_v5/"
+    path = "./saved_models/PO3_v4/"
     cpu_device = torch.device("cpu")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.cuda.is_available():
@@ -308,6 +308,7 @@ def main():
     data_test = [time_dist, (score_dist_h, f_score_h, f_iou_h, nb_h, g_h, f_h, iou_h, dist_h),
                  (score_dist_m, f_score_m, f_iou_m, nb_m, g_m, f_m, iou_m, dist_m)]
     print(data_test)
+
 
 
     metric_logger = utils.MetricLogger(delimiter="  ")

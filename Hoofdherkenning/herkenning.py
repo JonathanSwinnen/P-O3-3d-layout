@@ -102,7 +102,7 @@ def main():
     tr_loss = []
 
     # let's train it for a few epochs
-    num_epochs = 100
+    num_epochs = 50
 
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
@@ -110,7 +110,7 @@ def main():
         print("Training Loss: ", str(training_data.loss)[:7])
         tr_loss.append(float(str(training_data.loss)[:7]))
         # update the learning rate
-        # lr_scheduler.step()
+        lr_scheduler.step()
         # evaluate on the test dataset
 
         _, epoch_validation = evaluate(model, data_loader_test, device=device)

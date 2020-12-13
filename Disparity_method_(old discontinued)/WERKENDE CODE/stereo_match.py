@@ -138,59 +138,59 @@ if __name__ == '__main__':
 
     # zieke hacks om 540 * 940 None's te krijgen
     # [None] * x gaat niet, want obj gekoppeld
-    objects = []
-    for i in range(len(points)):
-        appending = []
-        for j in range(len(points[0])):
-            appending.append(None)
-        objects.append(appending)
-
-    # go search objects
-    counter = 1
-    for i in range(len(points)):
-        # calc every pixels once
-        for j in range(len(points[0])):
-            # if no group yet
-            if objects[i][j] is None:
-                # add to current group
-                objects[i][j] = counter
-                to_check = [(i, j)]
-                while len(to_check) > 0:
-                    p1 = to_check.pop()
-                    # get all adjacent pixels that don't have a group yet
-                    for p2 in points_to_check(p1[0], p1[1], objects):
-                        # if distance between points is less than 0.2
-                        if norm(points[p1[0]][p1[1]], points[p2[0]][p2[1]]) < 0.2: # 0.2 can be adjusted!
-                            # add to group and search adjacent pixels
-                            objects[p2[0]][p2[1]] = counter
-                            to_check += [p2]
-                # group is closed, next group
-                counter += 1
-
-    # convert to numpy array, needed for mask
-    for row in objects:
-        row = np.array(row)
-    objects = np.array(objects)
-
-    mask = dispf > dispf.min()+1
-    points = points[mask]
-    colors = colors[mask]
-    objects = objects[mask]
-
-    # count amount of pixels in group
-    numbers = {}
-    for i in range(0, len(objects)):
-        if objects[i] in numbers:
-            numbers[objects[i]] += 1
-        else:
-            numbers[objects[i]] = 1
-
-    # go search all groups with enough pixels
-    list_good_nb = []
-    for key, val in numbers.items():
-        if val > 5000: # amount of pixels in group, can be adjusted
-            list_good_nb += [key]
-    print(len(numbers.keys()), len(list_good_nb))
+    #objects = []
+    #for i in range(len(points)):
+    #    appending = []
+    #    for j in range(len(points[0])):
+    #        appending.append(None)
+    #    objects.append(appending)
+#
+    ## go search objects
+    #counter = 1
+    #for i in range(len(points)):
+    #    # calc every pixels once
+    #    for j in range(len(points[0])):
+    #        # if no group yet
+    #        if objects[i][j] is None:
+    #            # add to current group
+    #            objects[i][j] = counter
+    #            to_check = [(i, j)]
+    #            while len(to_check) > 0:
+    #                p1 = to_check.pop()
+    #                # get all adjacent pixels that don't have a group yet
+    #                for p2 in points_to_check(p1[0], p1[1], objects):
+    #                    # if distance between points is less than 0.2
+    #                    if norm(points[p1[0]][p1[1]], points[p2[0]][p2[1]]) < 0.2: # 0.2 can be adjusted!
+    #                        # add to group and search adjacent pixels
+    #                        objects[p2[0]][p2[1]] = counter
+    #                        to_check += [p2]
+    #            # group is closed, next group
+    #            counter += 1
+#
+    ## convert to numpy array, needed for mask
+    #for row in objects:
+    #    row = np.array(row)
+    #objects = np.array(objects)
+#
+    #mask = dispf > dispf.min()+1
+    #points = points[mask]
+    #colors = colors[mask]
+    #objects = objects[mask]
+#
+    ## count amount of pixels in group
+    #numbers = {}
+    #for i in range(0, len(objects)):
+    #    if objects[i] in numbers:
+    #        numbers[objects[i]] += 1
+    #    else:
+    #        numbers[objects[i]] = 1
+#
+    ## go search all groups with enough pixels
+    #list_good_nb = []
+    #for key, val in numbers.items():
+    #    if val > 5000: # amount of pixels in group, can be adjusted
+    #        list_good_nb += [key]
+    #print(len(numbers.keys()), len(list_good_nb))
 
     # export all good groups
     #for i in range(0, len(list_good_nb)):
